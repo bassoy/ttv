@@ -1,0 +1,70 @@
+# Copyright 2018 Stefan Seefeld
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
+
+
+language: cpp
+
+sudo: required
+
+branches:
+  only:
+    - master
+    - develop
+    - doc
+    - ci
+
+# env: specifies additional global variables to define per row in build matrix
+env:
+  global:
+    - CLBLAS_PREFIX=${TRAVIS_BUILD_DIR}/CLBLAS/
+    - PATH=${CLBLAS_PREFIX}/bin:$PATH
+    - LD_LIBRARY_PATH=${CLBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
+
+matrix:
+  include:
+    - os: linux
+      env: TOOLSET=gcc COMPILER=g++-7 CXXSTD=17    
+    - os: linux
+      env: TOOLSET=clang COMPILER=clang++-6.0 CXXSTD=17        
+      
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-7
+    - clang++-6.0
+    - libopenblas-base
+    - libomp5
+
+install:
+  - git clone -b master https://github.com/bassoy/ttv ttv
+  - cd ttv
+  - export TLIB_ROOT="`pwd`"
+
+# Use before_script: to run configure steps
+before_script:
+
+# use script: to execute build steps
+script:
+  - |-
+    echo "using $TOOLSET : : $COMPILER ;" >> ~/user-config.jam;
+    echo "using clblas : : <include>${CLBLAS_PREFIX}/include <search>${CLBLAS_PREFIX}/lib ;" >> ~/user-config.jam;
+  - cd ttv/test
+  - make -j8
+  - ./main
+
+after_success:
+  - .ci/report_coverage.sh
+  # Uploading to CodeCov
+  # '-f' specifies file(s) to use and disables manual coverage gathering and file search which has already been done above
+  - curl -s https://codecov.io/bash > cov.sh
+  - chmod +x cov.sh
+  - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
+
+
+notifications:
+  email:
+    on_success: always
+
