@@ -1,9 +1,9 @@
 Tensor-Vector Multiplication Library (TTV)
 =====
 [![Language](https://img.shields.io/badge/C%2B%2B-11-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
-[![License](https://img.shields.io/aur/license/yaourt.svg)](https://github.com/bassoy/ttv/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/bassoy/ttv/blob/master/LICENSE)
 [![Wiki](https://img.shields.io/badge/ttv-wiki-blue.svg)](https://github.com/bassoy/ttv/wiki)
-[![Gitter](https://img.shields.io/badge/bassoy-chat%20on%20gitter-4eb899.svg)](https://gitter.im/bassoy)
+[![Gitter](https://img.shields.io/badge/ttv-chat%20on%20gitter-4eb899.svg)](https://gitter.im/bassoy)
 
 
 ## Documentation 
