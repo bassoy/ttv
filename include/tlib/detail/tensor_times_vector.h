@@ -1,3 +1,20 @@
+/*
+ *   Copyright (C) 2019 Cem Bassoy (cem.bassoy@gmail.com)
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef TLIB_DETAIL_TTV_H
 #define TLIB_DETAIL_TTV_H
 
@@ -13,7 +30,6 @@
 #include "tags.h"
 #include "cases.h"
 #include "strides.h"
-#include "layout.h"
 
 
 #ifdef USE_OPENBLAS
@@ -83,7 +99,7 @@ struct TensorTimesVector;
 
 
 /**
- * \brief Implements a tensor-times-vector-multiplication where A and C can be subtensors
+ * \brief Implements a tensor-times-vector-multiplication
  *
  * Performs a slice-times-vector operation in the most inner recursion level with subtensors of A and C
  *
@@ -363,6 +379,7 @@ private:
 template<class value_t>
 struct TensorTimesVector<value_t,std::tuple<large_block>>
 {
+	// is a sequential version 
 	static void run (
 			size_t const m,
 			size_t const p,
@@ -391,6 +408,7 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 	}
 
 
+	// uses for case 8 the outer-most dimension for parallelization without BLAS.
 	static void run_parallel(
 			size_t const m,
 			size_t const p,
@@ -435,6 +453,7 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 	}
 
 
+	// uses for case-8 the outer-most dimension for parallelization with BLAS.
 	static void run_parallel_blas(
 			size_t const m,
 			size_t const p,
@@ -479,170 +498,8 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 		}
 	}
 
-	static void run_parallel_blas_2(
-			size_t const m,
-			size_t const p,
-			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-			value_t const*const __restrict b, size_t const*const nb,
-			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-			)
-	{
-		
-		if(!is_case<8>(p,m,pia)){
-			set_blas_threads(std::thread::hardware_concurrency());
-			MatrixTimesVector<value_t,std::tuple<blas>>::run(m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
-		}
-		else {		
-			assert(is_case<8>(p,m,pia));
-			assert(m>0);
-			auto const na_m = na[m-1];
 
-			// m != pia[0] && m != pia[p-1], inv_pia_m != p
-			auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
-
-			assert(p>2);
-			assert(inv_pia_m!=p);
-
-			auto const wa_m = wa[m-1];
-
-			// number of modes which are not contiguously stored
-			auto const q = p - inv_pia_m;
-			assert(q>0);
-			
-			set_blas_threads(1);
-
-
-			if(q == 1) {
-				#pragma omp parallel for schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp = 0; rp < na[pia[p-1]-1]; ++rp){
-					auto const*const ap = a+rp*wa[pia[p-1]-1];
-					auto      *const cp = c+rp*wc[pic[p-2]-1];
-					gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-				}
-			}
-			else if(q == 2){
-				#pragma omp parallel for collapse(2) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1];
-						auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1];
-						gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-					}
-				}
-			}
-			else if(q == 3){
-				#pragma omp parallel for collapse(3) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1];
-							auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1];
-							gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-						}
-					}
-				}
-			}
-
-			else if(q == 4){
-				#pragma omp parallel for collapse(4) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							for(size_t rp4 = 0; rp4 < na[pia[p-4]-1]; ++rp4){
-								auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1]+rp4*wa[pia[p-4]-1];
-								auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1]+rp4*wc[pic[p-5]-1];
-								gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-							}
-						}
-					}
-				}
-			}
-			else if(q == 5){
-				#pragma omp parallel for collapse(5) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							for(size_t rp4 = 0; rp4 < na[pia[p-4]-1]; ++rp4){
-								for(size_t rp5 = 0; rp5 < na[pia[p-5]-1]; ++rp5){
-									auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1]+rp4*wa[pia[p-4]-1]+rp5*wa[pia[p-5]-1];
-									auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1]+rp4*wc[pic[p-5]-1]+rp5*wc[pic[p-6]-1];
-									gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-								}
-							}
-						}
-					}
-				}
-			}
-
-			else if(q == 6){
-				#pragma omp parallel for collapse(6) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							for(size_t rp4 = 0; rp4 < na[pia[p-4]-1]; ++rp4){
-								for(size_t rp5 = 0; rp5 < na[pia[p-5]-1]; ++rp5){
-									for(size_t rp6 = 0; rp6 < na[pia[p-6]-1]; ++rp6){
-										auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1]+rp4*wa[pia[p-4]-1]+rp5*wa[pia[p-5]-1]+rp6*wa[pia[p-6]-1];
-										auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1]+rp4*wc[pic[p-5]-1]+rp5*wc[pic[p-6]-1]+rp6*wc[pic[p-7]-1];
-										gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			else if(q == 7){
-				#pragma omp parallel for collapse(7) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							for(size_t rp4 = 0; rp4 < na[pia[p-4]-1]; ++rp4){
-								for(size_t rp5 = 0; rp5 < na[pia[p-5]-1]; ++rp5){
-									for(size_t rp6 = 0; rp6 < na[pia[p-6]-1]; ++rp6){
-										for(size_t rp7 = 0; rp7 < na[pia[p-7]-1]; ++rp7){
-											auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1]+rp4*wa[pia[p-4]-1]+rp5*wa[pia[p-5]-1]+rp6*wa[pia[p-6]-1]+rp7*wa[pia[p-7]-1];
-											auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1]+rp4*wc[pic[p-5]-1]+rp5*wc[pic[p-6]-1]+rp6*wc[pic[p-7]-1]+rp7*wc[pic[p-8]-1];
-											gemv_col_blas(  ap,b,cp, wa_m,na_m,wa_m );
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			else{ //if(q == 8){
-				#pragma omp parallel for collapse(8) schedule(dynamic) firstprivate(p,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-				for(size_t rp1 = 0u; rp1 < na[pia[p-1]-1]; ++rp1){
-					for(size_t rp2 = 0; rp2 < na[pia[p-2]-1]; ++rp2){
-						for(size_t rp3 = 0; rp3 < na[pia[p-3]-1]; ++rp3){
-							for(size_t rp4 = 0; rp4 < na[pia[p-4]-1]; ++rp4){
-								for(size_t rp5 = 0; rp5 < na[pia[p-5]-1]; ++rp5){
-									for(size_t rp6 = 0; rp6 < na[pia[p-6]-1]; ++rp6){
-										for(size_t rp7 = 0; rp7 < na[pia[p-7]-1]; ++rp7){
-											for(size_t rp8 = 0; rp8 < na[pia[p-8]-1]; ++rp8){
-												auto const*const ap = a+rp1*wa[pia[p-1]-1]+rp2*wa[pia[p-2]-1]+rp3*wa[pia[p-3]-1]+rp4*wa[pia[p-4]-1]+rp5*wa[pia[p-5]-1]+rp6*wa[pia[p-6]-1]+rp7*wa[pia[p-7]-1]+rp8*wa[pia[p-8]-1];
-												auto      *const cp = c+rp1*wc[pic[p-2]-1]+rp2*wc[pic[p-3]-1]+rp3*wc[pic[p-4]-1]+rp4*wc[pic[p-5]-1]+rp5*wc[pic[p-6]-1]+rp6*wc[pic[p-7]-1]+rp7*wc[pic[p-8]-1]+rp8*wc[pic[p-9]-1];
-												run_blas(p-8,p-9,  wa_m,na_m,wa_m,inv_pia_m,  ap,na,wa,pia,  b,  cp,nc,wc,pic);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-
-
-
-
+	// uses all available free dimensions for parallelization with BLAS.
 	static void run_parallel_blas_3(
 			size_t const m,
 			size_t const p,
@@ -698,6 +555,7 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 	}
 	
 	
+	// uses for case 8 all available free dimensions for parallelization with BLAS and adjusts the parallelization for case 8.
 	static void run_parallel_blas_4(
 			size_t const m,
 			size_t const p,
