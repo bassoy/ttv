@@ -57,19 +57,19 @@ inline void compute_strides(InputIt1 shape_begin, InputIt1 shape_end, InputIt2 l
 	}
 }
 
-template<class SizeType>
-inline auto generate_strides(std::vector<SizeType> const& shape, std::vector<SizeType> const& layout)
+template<class size_type>
+inline auto generate_strides(std::vector<size_type> const& shape, std::vector<size_type> const& layout)
 {
-	auto strides = std::vector<SizeType>(shape.size());
+	auto strides = std::vector<size_type>(shape.size());
 	compute_strides(shape.begin(), shape.end(), layout.begin(), strides.begin());
 	return strides;
 }
 
-template<class SizeType, std::size_t N>
-inline auto generate_strides(std::array<SizeType,N> const& shape, std::array<SizeType,N> const& layout)
+template<class size_type, std::size_t N>
+inline auto generate_strides(std::array<size_type,N> const& shape, std::array<size_type,N> const& layout)
 {
 	static_assert(N>0,"Static error in tlib::detail::generate_strides(): N, i.e. length of array should be greater than zero.");
-	auto strides = std::array<SizeType,N>(shape.size());
+	auto strides = std::array<size_type,N>(shape.size());
 	compute_strides(shape.begin(), shape.end(), layout.begin(), strides.begin());
 	return strides;
 }
@@ -106,14 +106,14 @@ inline bool is_valid_strides(InputIt1 layout_begin, InputIt1 layout_end, InputIt
 
 
 
-template<class size_t>
-static inline auto get_layout_out(const size_t mode, std::vector<size_t> const& pia )
+template<class size_type>
+static inline auto get_layout_out(const size_type mode, std::vector<size_type> const& pia )
 {
 	auto const ranka = pia.size();
 	assert(ranka >= 2 );
 	assert(mode>0ul && mode <= ranka);
 	auto const rankc = ranka-1;
-	auto pic = std::vector<size_t>(rankc,1);
+	auto pic = std::vector<size_type>(rankc,1);
 	size_t mode_inv = 0;
 	for(; mode_inv < ranka; ++mode_inv)
 		if(pia.at(mode_inv) == mode)
