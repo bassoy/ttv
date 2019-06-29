@@ -26,7 +26,8 @@ branches:
 # env: specifies additional global variables to define per row in build matrix
 env:
   global:
-    - LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+    - export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+    - export LD_LIBRARY_PATH="/usr/local/clang/lib:$LD_LIBRARY_PATH"
 
 matrix:
   include:
