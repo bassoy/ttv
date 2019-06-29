@@ -50,7 +50,7 @@ addons:
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
   - cd ttv
-  - export TLIB_ROOT="`pwd`"
+#  - export TLIB_ROOT="`pwd`"
 
 # Use before_script: to run configure steps
 before_script:
@@ -58,9 +58,8 @@ before_script:
 # use script: to execute build steps
 script:
   - |-
-  - cd ttv/test
-  - make -j8
-  - ./bin/main
+  - make -C test -j8
+  - ./test/bin/main
 
 after_success:
   - .ci/report_coverage.sh
