@@ -47,6 +47,7 @@ addons:
     - libopenblas-base
     - libomp5
     - libgtest-dev
+    - cmake
 
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
