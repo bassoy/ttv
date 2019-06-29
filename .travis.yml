@@ -26,9 +26,8 @@ branches:
 # env: specifies additional global variables to define per row in build matrix
 env:
   global:
-    - CLBLAS_PREFIX=${TRAVIS_BUILD_DIR}/CLBLAS/
-    - PATH=${CLBLAS_PREFIX}/bin:$PATH
-    - LD_LIBRARY_PATH=${CLBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
+    - export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+    - export LD_LIBRARY_PATH="/usr/local/clang/lib:$LD_LIBRARY_PATH"
 
 matrix:
   include:
@@ -45,14 +44,20 @@ addons:
     - g++-7
     - clang++-6.0
     - libopenblas-*
-    - libomp5
+    - libomp5*
+    - libgomp1
     - libgtest-dev
     - cmake
 
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
   - cd ttv
-  - dpkg -L libopenblas-dev
+#  - dpkg -L libopenblas-dev
+  - dpkg -L libomp5
+  - dpkg -L libgomp1
+  - echo $LD_LIBRARY_PATH
+  - find /usr/lib/x86_64-linux-gnu -iname "libomp*"
+  - find /usr/lib/x86_64-linux-gnu -iname "libgomp*"
 #  - export TLIB_ROOT="`pwd`"
 
 # Use before_script: to run configure steps
