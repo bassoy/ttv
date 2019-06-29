@@ -26,29 +26,29 @@ namespace tlib::gtest
 {
 
 template<class size_type, size_type rank>
-static inline auto generate_shapes_help(
+inline auto generate_shapes_help(
 	std::vector<std::vector<size_type>>& shapes,
 	std::vector<size_type> const& start,
 	std::vector<size_type> shape,
 	std::vector<size_type> const& dims)
 {
 	if constexpr ( rank > 0 ){
-		for(auto j = 0ul, c = start.at(rank); j < dims.at(rank); ++j, c*=2){
+		for(auto j = size_type{0u}, c = start.at(rank); j < dims.at(rank); ++j, c*=2u){
 			shape.at(rank) = c;
 			generate_shapes_help<size_type,rank-1>(shapes, start, shape, dims);
 		}
 	}
 	else
 	{
-		for(auto j = 0ul, c = start.at(rank); j < dims.at(rank); ++j, c*=2){
+		for(auto j = size_type{0u}, c = start.at(rank); j < dims.at(rank); ++j, c*=2u){
 			shape.at(rank) = c;
 			shapes.push_back(shape);
 		}
 	}
 }
 
-template<class size_type, size_type rank>
-static inline auto generate_shapes(std::vector<size_type> const& start, std::vector<size_type> const& dims)
+template<class size_type, unsigned rank>
+inline auto generate_shapes(std::vector<size_type> const& start, std::vector<size_type> const& dims)
 {
 	std::vector<std::vector<size_type>> shapes;
 	static_assert (rank!=0,"Static Error in fhg::gtest_transpose: Rank cannot be zero.");
@@ -63,15 +63,15 @@ static inline auto generate_shapes(std::vector<size_type> const& start, std::vec
 }
 
 template<class size_type, unsigned rank>
-static inline auto generate_permutations()
+inline auto generate_permutations()
 {
-	auto f = 1ul;
-	for(auto i = 2ul; i <= rank; ++i)
+	auto f = size_type{1u};
+	for(auto i = unsigned{2u}; i <= rank; ++i)
 		f*=i;
 	std::vector<std::vector<size_type>> layouts ( f );
 	std::vector<size_type> current(rank);
-	std::iota(current.begin(), current.end(), size_type(1));
-	for(auto i = 0ul; i < f; ++i){
+	std::iota(current.begin(), current.end(), size_type{1u});
+	for(auto i = size_type{0u}; i < f; ++i){
 		layouts.at(i) = current;
 		std::next_permutation(current.begin(), current.end());
 	}

@@ -28,15 +28,13 @@
 #include <tlib/detail/strides.h>
 
 template<class size_type, size_type rank>
-static inline auto check_index_space_division_small_block(size_type init, size_type steps)
+inline auto check_index_space_division_small_block(size_type init, size_type steps)
 {
 	static_assert(rank>2, "Static error in gtest_tensor_times_vector: rank must be greater 2.");
 
 	//	using value_type = float;
 	using shape_t       = std::vector<size_type>;
 	using layout_t      = std::vector<size_type>;
-	using strides_t     = std::vector<size_type>;	
-	using multi_index_t = std::vector<size_type>;
 
 	auto shapes  = tlib::gtest::generate_shapes<size_type,rank>(shape_t(rank,init),std::vector<size_type>(rank,steps));
 	auto taus    = tlib::gtest::generate_permutations<size_type,rank>();
@@ -132,131 +130,11 @@ static inline auto check_index_space_division_small_block(size_type init, size_t
 
 
 TEST(TensorTimesVector, CheckIndexDivisionSmallBlock)
-{
+{	
 	check_index_space_division_small_block<unsigned,3u>(2u,4u);
-	check_index_space_division_small_block<unsigned,4u>(2u,4u);
+	check_index_space_division_small_block<unsigned,4u>(2u,3u);
+	check_index_space_division_small_block<unsigned,5u>(2u,2u);
 }
-
-
-#if 0
-TEST(accessor, forward_backward_piecewise)
-{
-	using value_type = float;
-	using accessor = fhg::accessor<std::allocator<value_type>>;
-	using base = std::vector<std::size_t>;
-
-
-	auto divideLayout = [] (fhg::layout const& pi, const std::size_t m)
-	{
-		const auto nn = pi.size();
-		assert(nn >= m);
-		assert(m  > 0);
-		assert(nn > 2);
-
-		auto const pi1 = pi[0];
-		auto const pik = m;
-
-		auto tau = base(nn-2);
-		for(auto i = 0u, j = 0u; i < pi.size(); ++i){
-			auto pii = pi.at(i);
-			if(pii == pi1 || pii == pik)
-				continue;
-			assert(j < nn-2);
-			tau.at(j) = pii;
-			if(pii > pi1) --tau.at(j);
-			if(pii > pik) --tau.at(j);
-			j++;
-		}
-
-		auto const psi = pi1 < pik ? base{1,2} : base{2,1};
-
-		return std::make_pair( fhg::layout(psi), fhg::layout(tau) );
-
-	};
-
-
-	auto divideStrides = [] (fhg::strides const& w, fhg::layout const& pi, const std::size_t m)
-	{
-		const auto nn = pi.size();
-		assert(nn == w.size());
-		assert(nn >= m);
-		assert(m  > 0);
-		assert(nn > 2);
-
-		auto const pi1 = pi[0];
-		auto const pik = m;
-
-		auto w1 = w[pi1-1];
-		auto wm = w[pik-1];
-
-		// v is new stride
-		auto y = base(nn-2);
-		for(auto i = 0u, j = 0u; i < w.size(); ++i)
-			if((i+1) != pi1 && (i+1) != pik)
-				y.at(j++) = w.at(i);
-
-		auto x = base{w1,wm};
-
-		return std::make_pair( fhg::strides(x), fhg::strides(y) );
-
-	};
-
-	auto divideShapes = [] (fhg::shape const& n, fhg::layout const& pi, const std::size_t m)
-	{
-		const auto nn = pi.size();
-		assert(nn == n.size());
-		assert(nn >= m);
-		assert(m  > 0);
-		assert(nn > 2);
-
-		auto const pi1 = pi[0];
-		auto const pik = m;
-
-		auto n1 = n[pi1-1];
-		auto nm = n[pik-1];
-
-		// v is new stride
-		auto y = base(nn-2);
-		for(auto i = 0u, j = 0u; i < nn; ++i)
-			if((i+1) != pi1 && (i+1) != pik)
-				y.at(j++) = n.at(i);
-
-		auto x = base{n1,nm};
-
-		return std::make_pair( fhg::shape(x), fhg::shape(y) );
-
-	};
-
-
-	auto divideMultiIndex = [] (base const& n, fhg::layout const& pi, const std::size_t m)
-	{
-		const auto nn = pi.size();
-		assert(nn == n.size());
-		assert(nn >= m);
-		assert(m  > 0);
-		assert(nn > 2);
-
-		auto const pi1 = pi[0];
-		auto const pik = m;
-
-		auto n1 = n[pi1-1];
-		auto nm = n[pik-1];
-
-		// v is new stride
-		auto y = base(nn-2);
-		for(auto i = 0u, j = 0u; i < nn; ++i)
-			if((i+1) != pi1 && (i+1) != pik)
-				y.at(j++) = n.at(i);
-
-		auto x = base{n1,nm};
-
-		return std::make_pair( x, y );
-
-	};
-}
-*/
-#endif
-
 
 
 

@@ -191,6 +191,50 @@ TEST_F(LayoutTest, inverse_mode)
 	}		
 }
 
+TEST_F(LayoutTest, output_layout)
+{
+	for(auto order = 2u; order <= 8u; ++order)
+	{
+		auto layout_in   = layout_t(order  ,0);
+		auto layout_out  = layout_t(order-1,0);
+		
+		for(auto format = 1u; format <= order; ++format)
+		{
+			tlib::detail::compute_k_order(layout_in.begin(), layout_in.end(),format);			
+			ASSERT_TRUE(tlib::detail::is_valid_layout(layout_in.begin(), layout_in.end()));
+			
+			for(auto mode = 1u; mode <= order; ++mode)
+			{
+				tlib::detail::compute_output_layout(layout_in.begin(), layout_in.end(), layout_out.begin(), mode);				
+				ASSERT_TRUE(tlib::detail::is_valid_layout(layout_out.begin(), layout_out.end()));
+				
+				const auto imode = tlib::detail::inverse_mode(layout_in.begin(), layout_in.end(), mode)-1;
+				
+				ASSERT_TRUE(0 <= imode  || imode<order);
+				
+				const auto min1 = std::min(imode  ,order-1);
+				const auto min2 = std::min(imode+1,order-1);
+				
+				const auto eq_func = [mode](auto l, auto r){ if(r>mode) return (r-1)==l; else return l==r; };
+				
+				std::equal(layout_in.begin()     ,layout_in.begin()+min1  , layout_out.begin()      , eq_func);
+				std::equal(layout_in.begin()+min2,layout_in.begin()+order , layout_out.begin()+imode, eq_func);
+/*
+				std::cout << "layout_in = ";
+				std::copy(layout_in.begin(),layout_in.end(),std::ostream_iterator<unsigned>(std::cout," "));
+				std::cout << std::endl;
+	
+				std::cout << "layout_out = ";
+				std::copy(layout_out.begin(),layout_out.end(),std::ostream_iterator<unsigned>(std::cout," "));
+				std::cout << std::endl;
+*/				
+			}
+//			std::cout << std::endl;			
+		}
+//		std::cout << std::endl;
+	}	
+}
+
 
 
 

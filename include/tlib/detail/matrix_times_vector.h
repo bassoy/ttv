@@ -259,9 +259,9 @@ struct MatrixTimesVector<value_t,std::tuple<>>
 {
 	static void run(
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-			value_t const*const b, size_t const*const nb,
-			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const b, size_t const*const /*nb*/,
+			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
 	{
 		auto n = compute_nfull(na,p) / na[m-1];
@@ -283,9 +283,9 @@ struct MatrixTimesVector<value_t,std::tuple<parallel>>
 {
 	static void run_parallel(
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-			value_t const*const b, size_t const*const nb,
-			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const b, size_t const*const /*nb*/,
+			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
 	{
 		
@@ -309,9 +309,9 @@ struct MatrixTimesVector<value_t,std::tuple<blas>>
 {
 	static void run(
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-			value_t const*const b, size_t const*const nb,
-			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const b, size_t const*const /*nb*/,
+			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
 	{
 

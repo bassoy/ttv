@@ -1,10 +1,11 @@
-CC :=g++
-CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -Ofast -pthread -Wno-unknown-pragmas -Wno-attributes -fopenmp -DUSE_OPENBLAS
+#CC :=g++
+CC :=clang++
+CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -Ofast -march=native -pthread -fopenmp -DUSE_OPENBLAS
 #
-#-march=native
+#
 
 #CC :=clang++-5.0
-#CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -g -pthread -march=native
+#CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -g -pthread -march=native -Wno-unknown-pragmas -Wno-attributes 
 
 INTEL_DIR :=/opt/intel/mkl
 INTEL_INC :=-DMKL_ILP64 -m64 -I$(INTEL_DIR)/include

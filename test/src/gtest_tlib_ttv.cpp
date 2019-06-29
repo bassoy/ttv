@@ -79,31 +79,7 @@ static inline auto generate_permutations()
 }
 
 
-template<class size_t>
-static inline auto get_layout_out(const size_t mode, std::vector<size_t> const& pia )
-{
-	auto const ranka = pia.size();
-	assert(ranka >= 2 );
-	assert(mode>0ul && mode <= ranka);
-	auto const rankc = ranka-1;
-	auto pic = std::vector<size_t>(rankc,1);
-	size_t mode_inv = 0;
-	for(; mode_inv < ranka; ++mode_inv)
-		if(pia.at(mode_inv) == mode)
-			break;
-	assert(mode_inv != ranka);
 
-	for(auto i = 0u;       i < mode_inv && i < rankc; ++i) pic.at(i) = pia.at(i);
-	for(auto i = mode_inv; i < rankc;                 ++i) pic.at(i) = pia.at(i+1);
-
-	for(auto i = 0u; i < rankc; ++i)
-		if(pic.at(i) > mode)
-			--pic.at(i);
-	if(pic.size() == 1)
-		pic.push_back(2);
-
-	return pic;
-}
 
 
 template<class size_t>

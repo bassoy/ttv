@@ -526,7 +526,7 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 			assert(p>inv_pia_m);
 			assert(inv_pia_m>0);
 
-			auto const na_pia_1 = na[pia[0]-1];
+			//auto const na_pia_1 = na[pia[0]-1];
 
 			auto const na_m = na[m-1];
 			auto const wa_m = wa[m-1];
@@ -580,7 +580,7 @@ struct TensorTimesVector<value_t,std::tuple<large_block>>
 			assert(p>inv_pia_m);
 			assert(inv_pia_m>0);
 
-			auto const na_pia_1 = na[pia[0]-1];
+			//auto const na_pia_1 = na[pia[0]-1];
 
 			auto const na_m = na[m-1];
 			auto const wa_m = wa[m-1];
@@ -643,7 +643,7 @@ private:
 		assert(inv_pia_m != 1);
 		if(r>0){
 			if (inv_pia_m >= r) {
-				const auto qq = inv_pia_m == r ? q : q-1;
+				//const auto qq = inv_pia_m == r ? q : q-1;
 				run  (r-1,q-1,nn,  na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
 			}
 			else if (inv_pia_m < r){
@@ -718,8 +718,8 @@ struct TensorTimesVector<value_t,std::tuple<block>>
 			auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 			assert(p>1);
 
-			auto wa_pia1 = wa[pia[1]-1];
-			auto wc_pic0 = wc[pic[0]-1];
+			//auto wa_pia1 = wa[pia[1]-1];
+			//auto wc_pic0 = wc[pic[0]-1];
 
 			size_t nn = 1;
 			for(size_t r = 0; r<(inv_pia_m-1); ++r) nn *= na[pia[r]-1];

@@ -80,7 +80,7 @@ constexpr auto at_at_1(unsigned const p, size_type const j_view, size_type const
 	size_type k = j_view;
 	size_type j = 0;
 
-	for(int r = 0; r < p; ++r)
+	for(unsigned r = 0; r < p; ++r)
 	{
 		const auto i = k/w_view[r];		
 		k -= w_view [r]*i;		
