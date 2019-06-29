@@ -46,6 +46,7 @@ addons:
     - clang++-6.0
     - libopenblas-base
     - libomp5
+    - libgtest-dev
 
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
@@ -54,6 +55,12 @@ install:
 
 # Use before_script: to run configure steps
 before_script:
+  - cd /usr/src/gtest
+  - sudo cmake .
+  - sudo make
+  - sudo mv libgtest* /usr/lib/
+  - cd "${TRAVIS_BUILD_DIR}"
+
 
 # use script: to execute build steps
 script:
