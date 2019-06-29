@@ -44,7 +44,7 @@ addons:
     packages:
     - g++-7
     - clang++-6.0
-    - libopenblas-base
+    - libopenblas-*
     - libomp5
     - libgtest-dev
     - cmake
