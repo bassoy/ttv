@@ -26,9 +26,7 @@ branches:
 # env: specifies additional global variables to define per row in build matrix
 env:
   global:
-    - CLBLAS_PREFIX=${TRAVIS_BUILD_DIR}/CLBLAS/
-    - PATH=${CLBLAS_PREFIX}/bin:$PATH
-    - LD_LIBRARY_PATH=${CLBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
+    - LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
 
 matrix:
   include:
@@ -56,6 +54,8 @@ install:
 #  - dpkg -L libopenblas-dev
   - dpkg -L libomp5
   - dpkg -L libgomp1
+  - echo $LD_LIBRARY_PATH
+  - find /usr/lib/x86_64-linux-gnu -iname "libomp*"
 #  - export TLIB_ROOT="`pwd`"
 
 # Use before_script: to run configure steps
