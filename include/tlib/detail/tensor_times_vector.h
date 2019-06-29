@@ -33,7 +33,7 @@
 
 
 #ifdef USE_OPENBLAS
-#include <cblas-openblas.h>
+#include <cblas.h>
 #endif
 
 #ifdef USE_INTELBLAS
