@@ -52,6 +52,7 @@ addons:
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
   - cd ttv
+  - dpkg -L libopenblas-dev
 #  - export TLIB_ROOT="`pwd`"
 
 # Use before_script: to run configure steps
