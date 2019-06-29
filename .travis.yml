@@ -58,11 +58,9 @@ before_script:
 # use script: to execute build steps
 script:
   - |-
-    echo "using $TOOLSET : : $COMPILER ;" >> ~/user-config.jam;
-    echo "using clblas : : <include>${CLBLAS_PREFIX}/include <search>${CLBLAS_PREFIX}/lib ;" >> ~/user-config.jam;
   - cd ttv/test
   - make -j8
-  - ./main
+  - ./bin/main
 
 after_success:
   - .ci/report_coverage.sh
