@@ -1,6 +1,20 @@
-# Copyright 2018 Stefan Seefeld
-# Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
+/*
+ *   Copyright (C) 2018 Stefan Seefeld
+ *   Copyright (C) 2019 Cem Bassoy
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 
 language: cpp
@@ -10,9 +24,6 @@ sudo: required
 branches:
   only:
     - master
-    - develop
-    - doc
-    - ci
 
 # env: specifies additional global variables to define per row in build matrix
 env:
@@ -26,7 +37,7 @@ matrix:
     - os: linux
       env: TOOLSET=gcc COMPILER=g++-7 CXXSTD=17    
     - os: linux
-      env: TOOLSET=clang COMPILER=clang++-6.0 CXXSTD=17        
+      env: TOOLSET=clang COMPILER=clang++-6.0 CXXSTD=17
       
 addons:
   apt:
