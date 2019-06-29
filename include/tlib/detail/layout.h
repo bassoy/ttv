@@ -131,40 +131,36 @@ inline auto inverse_mode(InputIt layout_begin, InputIt layout_end, SizeType mode
 
 
 
-template<class InputIt, class OutputIt, class SizeType>
-inline void compute_output_layout(InputIt begin, InputIt end, OutputIt begin2, SizeType mode)
+template<class InputIt, class OutputIt, class ModeType>
+inline void compute_output_layout(InputIt begin, InputIt end, OutputIt begin2, ModeType q)
 {	
 	using value_type = typename std::iterator_traits<InputIt>::value_type;
 	
 	if(!is_valid_layout(begin,end)) 
 		throw std::runtime_error("Error in tlib::detail::compute_inverse_layout: input layout is not valid!");	
 	
-	const auto order_in_ = std::distance(begin,end);
+	const auto p_ = std::distance(begin,end);
 	
-	if(order_in_<= 0)
+	if(p_< 1)
 		throw std::runtime_error("Error in tlib::detail::compute_inverse_layout(): input layout is invalid.");
 	
-	auto const order_in = static_cast<value_type>(order_in_);
+	auto const p = static_cast<value_type>(p_);
 
 	
-	if(1u > mode || mode > order_in)
+	if(1u > q || q > p)
 		throw std::runtime_error("Error in tlib::detail::compute_inverse_layout: mode must be greater zero and less than or equal to the order!");	
 	
 	
-	const auto imode = inverse_mode(begin,end, mode)-1;		
-	assert(0u <= imode && imode < order_in);
+	const auto iq = inverse_mode(begin,end, q)-1;
+	assert(0u <= iq && iq < p);	
 	
-	const auto order_out = order_in-1;
+	const auto min1 = std::min(iq  ,p-1);
+	//const auto min2 = std::min(iq+1,p-1);
 	
-	const auto min1 = std::min(imode  ,order_out);
-	const auto min2 = std::min(imode+1,order_out);
-	
-	
-	std::copy(begin     ,begin+min1     , begin2);
-	std::copy(begin+min2,begin+order_in , begin2+imode);
-	
-	
-	std::for_each( begin2, begin2+order_out, [mode]( auto& cc ) { if(cc>mode) --cc; } );
+
+	std::copy(begin   , begin+min1     , begin2);
+	std::copy(begin+iq+1, begin+p        , begin2+iq);
+	std::for_each( begin2, begin2+p-1, [q]( auto& cc ) { if(cc>q) --cc; } );
 	
 	
 /*	

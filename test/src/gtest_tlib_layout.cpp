@@ -213,12 +213,12 @@ TEST_F(LayoutTest, output_layout)
 				ASSERT_TRUE(0 <= imode  || imode<order);
 				
 				const auto min1 = std::min(imode  ,order-1);
-				const auto min2 = std::min(imode+1,order-1);
+//				const auto min2 = std::min(imode+1,order-1);
 				
 				const auto eq_func = [mode](auto l, auto r){ if(r>mode) return (r-1)==l; else return l==r; };
 				
 				std::equal(layout_in.begin()     ,layout_in.begin()+min1  , layout_out.begin()      , eq_func);
-				std::equal(layout_in.begin()+min2,layout_in.begin()+order , layout_out.begin()+imode, eq_func);
+				std::equal(layout_in.begin()+imode+1,layout_in.begin()+order , layout_out.begin()+imode, eq_func);
 /*
 				std::cout << "layout_in = ";
 				std::copy(layout_in.begin(),layout_in.end(),std::ostream_iterator<unsigned>(std::cout," "));

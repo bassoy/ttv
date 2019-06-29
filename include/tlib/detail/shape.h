@@ -106,12 +106,21 @@ inline void compute_output_shape(InputIt begin, InputIt end, OutputIt begin_out,
 {
 	if(!is_valid_shape(begin,end))
 		throw std::runtime_error("Error in tlib::detail::compute_output_shape(): input shape is not valid.");
+		
+	const auto p_ = std::distance(begin,end);
 	
-	if(q==0 || q>std::distance(begin,end))
+	if(p_ < 1)
+		throw std::runtime_error("Error in tlib::detail::compute_output_shape(): input range is not valid.");
+	
+	const auto p = static_cast<SizeType>(p_);
+	
+	if(q==0u || q>p)
 		throw std::runtime_error("Error in tlib::detail::compute_output_shape(): constraction mode q should be greater than 0 and less than or equal to the tensor order.");
 	
-	std::copy(begin,  begin+q,begin_out);
-	std::copy(begin+q,end,    begin_out+q-1);
+	const auto min = std::min(q,p-1);
+	
+	std::copy(begin,  begin+min, begin_out);
+	std::copy(begin+q,end,       begin_out+q-1);
 }
 
 

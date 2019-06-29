@@ -1,6 +1,6 @@
 #CC :=g++
 CC :=clang++
-CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -Ofast -march=native -pthread -fopenmp -DUSE_OPENBLAS
+CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -g -march=native -pthread -fopenmp -DUSE_OPENBLAS # -Ofast
 
 INTEL_DIR :=/opt/intel/mkl
 INTEL_INC :=-DMKL_ILP64 -m64 -I$(INTEL_DIR)/include
