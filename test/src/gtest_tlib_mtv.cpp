@@ -18,13 +18,17 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 #include <tlib/ttv.h>
 #include "gtest_aux.h"
 
 
-template<class value_type, class size_type>
+
+
+template<class value_type, class size_type, class blas_functor_type>
 inline void check_mtv_help(
+		blas_functor_type&& blas_function,
 		std::vector<value_type> const& a,
 		std::vector<value_type> const& b,
 		std::vector<size_type> pia,
@@ -44,12 +48,12 @@ inline void check_mtv_help(
 	assert(n == b.size());
 	
 	auto c = std::vector<value_type>(m,0);
-
 	
-	if(pia[0] == 1) tlib::detail::gemv_col(a.data(),b.data(),c.data(),m,n,m);
-	if(pia[1] == 1) tlib::detail::gemv_row(a.data(),b.data(),c.data(),m,n,n);
+	auto const lda = pia[0]==1?m:n;
 	
-	/*
+	blas_function(a.data(),b.data(),c.data(),m,n,lda);
+	
+/*	
 	std::cout << "a = ";
 	std::copy(a.begin(),a.end(),std::ostream_iterator<value_type>(std::cout," "));
 	std::cout << std::endl;
@@ -61,7 +65,7 @@ inline void check_mtv_help(
 	std::cout << "c = ";
 	std::copy(c.begin(),c.end(),std::ostream_iterator<value_type>(std::cout," "));
 	std::cout << std::endl;
-	*/
+	
 	
 	for(auto i = 1ul; i <= m; ++i){		
 		const auto j = (i*n*(i*n+1))/2;				
@@ -69,82 +73,106 @@ inline void check_mtv_help(
 		const auto sum = j-k;
 		EXPECT_EQ( c[i-1], sum );
 	}
+*/	
+
 }
 
 
 template<class value_type, class size_type>
-inline void check_mtv_init( std::vector<value_type> & a, std::vector<size_type> const& na, std::vector<size_type> const& pia )
+inline void check_mtv_init( std::vector<value_type> & a, std::vector<size_type> const& na, std::vector<size_type> const& pia)
 {
+	//row-major
 	if(pia[1] == 1)
 		for(auto i = 0ul; i < na[0]; ++i)
 			for(auto j = 0ul; j < na[1]; ++j)
-				a[j+i*na[1]] = j*na[0] + i+1;
+				a[j+i*na[1]] = j+1 + i*na[1];
+	//col-major
 	else
 		for(auto j = 0ul; j < na[1]; ++j)
 			for(auto i = 0ul; i < na[0]; ++i)
 				a[i+j*na[0]] = i*na[1] + j+1;
+	
 }
 
 
-/*
-template<class value_type, class size_type>
-inline void check_mtv(std::size_t init, std::size_t steps)
+TEST(MatrixTimesVector, Gemv)
 {
-
+	using value_type = float;
+	using size_type = std::size_t;
+	
+	auto start = std::vector<size_type>(2u,2u);
+	auto steps =std::vector<size_type>(2u,8u);
+	
+	auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(start,steps);
+	
 	for(auto const& na : shapes) 
 	{
 		auto const nn = std::accumulate(na.begin(), na.end(), size_type{1} , std::multiplies<size_type>());
 		auto a = std::vector<value_type>(nn);
-		auto b = std::vector<value_type>(na.at(1),value_type{1});				
+		auto b = std::vector<value_type>(na.at(1),value_type{1});
 		
-		for(auto const& pia : layouts)
-		{	
-			check_mtv_init(a,na,pia);
-			
-			check_mtv_help(a,b,pia,na);
-		}
+		auto cm = std::vector<size_type>{1,2}; // column-major
+		check_mtv_init(a,na,cm);		
+		check_mtv_help(tlib::detail::gemv_col<value_type>,a,b,cm,na);		
+		
+		auto rm = std::vector<size_type>{2,1}; // row-major		
+		check_mtv_init(a,na,rm);
+		check_mtv_help(tlib::detail::gemv_row<value_type>,a,b,rm,na);
 	}
 }
-*/
 
 
-TEST(MatrixTimesVector, ColumnMajor)
+TEST(MatrixTimesVector, GemvParallel)
 {
-	using value_type = double;
+	using value_type = float;
 	using size_type = std::size_t;
 	
-	auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(std::vector<size_type>(2u,2u),std::vector<size_type>(2u,2u));
+	const auto start = std::vector<size_type>(2u,2u);
+	const auto steps =std::vector<size_type>(2u,8u);
+	
+	const auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(start,steps);
 	
 	for(auto const& na : shapes) 
 	{
 		auto const nn = std::accumulate(na.begin(), na.end(), size_type{1} , std::multiplies<size_type>());
 		auto a = std::vector<value_type>(nn);
-		auto b = std::vector<value_type>(na.at(1),value_type{1});						
-		auto pia = std::vector<size_type>{1,2}; // column-major
-		check_mtv_init(a,na,pia);		
-		check_mtv_help(a,b,pia,na);
+		auto b = std::vector<value_type>(na.at(1),value_type{1});
+		
+		auto cm = std::vector<size_type>{1,2}; // column-major
+		check_mtv_init(a,na,cm);		
+		check_mtv_help(tlib::detail::gemv_col_parallel<value_type>,a,b,cm,na);		
+		
+		auto rm = std::vector<size_type>{2,1}; // row-major		
+		check_mtv_init(a,na,rm);
+		check_mtv_help(tlib::detail::gemv_row<value_type>,a,b,rm,na);
 	}
-	
 }
 
 
-TEST(MatrixTimesVector, RowMajor)
+TEST(MatrixTimesVector, GemvBLAS)
 {
-	using value_type = double;
+	using value_type = float;
 	using size_type = std::size_t;
 	
-	auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(std::vector<size_type>(2u,2u),std::vector<size_type>(2u,2u));
+	const auto start = std::vector<size_type>(2u,2u);
+	const auto steps =std::vector<size_type>(2u,8u);
+	
+	const auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(start,steps);
 	
 	for(auto const& na : shapes) 
 	{
 		auto const nn = std::accumulate(na.begin(), na.end(), size_type{1} , std::multiplies<size_type>());
 		auto a = std::vector<value_type>(nn);
-		auto b = std::vector<value_type>(na.at(1),value_type{1});						
-		auto pia = std::vector<size_type>{2,1};  // row-major
-		check_mtv_init(a,na,pia);		
-		//check_mtv_help(a,b,pia,na);
+		auto b = std::vector<value_type>(na.at(1),value_type{1});
+		
+		auto cm = std::vector<size_type>{1,2}; // column-major
+		check_mtv_init(a,na,cm);		
+		check_mtv_help(tlib::detail::gemv_col_blas<value_type>,a,b,cm,na);		
+		
+		auto rm = std::vector<size_type>{2,1}; // row-major		
+		check_mtv_init(a,na,rm);
+		check_mtv_help(tlib::detail::gemv_row_blas<value_type>,a,b,rm,na);
 	}
-	
 }
 
 
