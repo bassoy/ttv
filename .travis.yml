@@ -58,7 +58,7 @@ install:
 #  - echo $LD_LIBRARY_PATH
 #  - find /usr/lib/x86_64-linux-gnu -iname "libomp*"
 #  - find /usr/lib/x86_64-linux-gnu -iname "libgomp*"
-#  - export TLIB_ROOT="`pwd`"
+  - export TLIB_ROOT="`pwd`"
 
 # Use before_script: to run configure steps
 before_script:
@@ -66,7 +66,7 @@ before_script:
   - sudo cmake .
   - sudo make
   - sudo mv libgtest* /usr/lib/
-  - cd "${TRAVIS_BUILD_DIR}"
+  - cd "${TLIB_ROOT}"
 
 
 # use script: to execute build steps
@@ -75,13 +75,12 @@ script:
   - ./test/bin/main
 
 after_success:
- - codecov -t 2db499b5-a629-49a7-89f8-9dfe6fcec723 -X gcov
-# - .ci/report_coverage.sh
+ - .ci/report_coverage.sh
   # Uploading to CodeCov
   # '-f' specifies file(s) to use and disables manual coverage gathering and file search which has already been done above
-#  - curl -s https://codecov.io/bash > cov.sh
-#  - chmod +x cov.sh
-#  - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
+  - curl -s https://codecov.io/bash > cov.sh
+  - chmod +x cov.sh
+  - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
 
 
 notifications:

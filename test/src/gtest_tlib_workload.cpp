@@ -133,7 +133,7 @@ TEST(TensorTimesVector, CheckIndexDivisionSmallBlock)
 {	
 	check_index_space_division_small_block<unsigned,3u>(2u,4u);
 	check_index_space_division_small_block<unsigned,4u>(2u,3u);
-	check_index_space_division_small_block<unsigned,5u>(2u,2u);
+//	check_index_space_division_small_block<unsigned,5u>(2u,2u);
 }
 
 
