@@ -75,9 +75,7 @@ script:
   - ./test/bin/main
 
 after_success:
- - .ci/report_coverage.sh
-  # Uploading to CodeCov
-  # '-f' specifies file(s) to use and disables manual coverage gathering and file search which has already been done above
+  - .ci/report_coverage.sh
   - curl -s https://codecov.io/bash > cov.sh
   - chmod +x cov.sh
   - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
