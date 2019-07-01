@@ -48,6 +48,7 @@ addons:
     - libgomp1
     - libgtest-dev
     - cmake
+    - lcov
 
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
