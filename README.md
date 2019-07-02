@@ -25,7 +25,7 @@ Implementation details and runtime behevior of the tensor-vector multiplication 
 * Tested with
   * GCC 7.4.0
   * Clang 6.0
-* Unit-tests in require GTest
+* Unit-tests require Google test framework
 
 ## Interface
 Interfaces of the high-performance tensor-times-vector functions are
