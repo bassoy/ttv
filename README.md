@@ -28,7 +28,7 @@ Implementation details and runtime behevior of the tensor-vector multiplication 
 * Unit-tests in require GTest
 
 ## Interface
-The interfaces of the high-performance tensor-times-vector functions are
+Interfaces of the high-performance tensor-times-vector functions are
 
 ```cpp
 template <class value_t>
@@ -51,7 +51,7 @@ where
 * `nb` points to the shape tuple of `b` with `nb[0]>=1`,
 * `c` points to the contiguously stored output tensor,
 * `nc` points to the shape tuple of `c` with `nc[r]>=1`,
-* `wc` points to a stride tuple of `c` which is computed w.r.t on `nc` and `pic`
+* `wc` points to a stride tuple of `c` which is computed w.r.t `nc` and `pic`
 * `pic` points to a layout (permutation) tuple of `c`
 
 There are auxiliary functions to compute shape, stride and layout tuples.
@@ -74,30 +74,30 @@ int main()
 
   auto na = vector_t{4,3,2};
   auto nb = vector_t{3};
-  auto nc = vector_t{4,2};
+  auto nc = vector_t{4,2};  // also: auto nc = tlib::detail::generate_output_shape(na,2); 
 
-  auto a = tensor_t(4*3*2,0.0f);
+  auto a = tensor_t(4*3*2,0.0f); 
   std::iota(a.begin(),a.end(),1.0f);
   auto b = tensor_t(3    ,1.0f);
   auto c = tensor_t(4*2  ,0.0f);
 
-  auto wa = vector_t{1,4,12};
-  auto wc = vector_t{1,4,12};
-
-  auto pia = vector_t{2,1,3}; // 2nd-order format, i.e. row-major
-  auto pic = vector_t{2,1}; // 2nd-order format, i.e. row-major
+  auto pia = vector_t{1,2,3}; // also: auto pia = tlib::detail::generate_first_order_layout(3,2); 
+  auto pic = vector_t{1,2};   // also: auto pic = tlib::detail::generate_output_layout(pia,2); 
+  
+  auto wa = vector_t{1,4,12}; // also: auto wa = tlib::detail::generate_strides(na,pia); 
+  auto wc = vector_t{1,4};    // also: auto wa = tlib::detail::generate_strides(nc,pic); 
 
   auto p = 3;
   auto q = 2;
 
 /*
   a = 
-  { 1  2  3  | 13 14 15
-    4  5  6  | 16 17 18
-    7  8  9  | 19 20 21
-    10 11 12 | 22 23 24 };
+  { 1  5  9  | 13 17 21
+    2  6 10  | 14 18 22
+    3  7 11  | 15 19 23
+    4  8 12  | 16 20 24 };
 
-  b = { 1 1 1} ;
+  b = { 1 1 1 } ;
 */
 
 
@@ -105,10 +105,10 @@ int main()
 
 /*
   c = 
-  { 1+2+3    | 13+14+15
-    4+5+6    | 16+17+18
-    7+8+9    | 19+20+21
-    10+11+12 | 22+23+24 };
+  { 1+5+ 9 | 13+17+21
+    2+6+10 | 14+18+22
+    3+7+11 | 15+19+23
+    4+8+12 | 16+20+24 };
 */
 }
 ```
