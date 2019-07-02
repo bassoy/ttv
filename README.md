@@ -33,11 +33,11 @@ The interfaces of the high-performance tensor-times-vector functions are
 ```cpp
 template <class value_t>
 void tensor_times_vector_|opt|(
-		size_t const q, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
+  size_t const q, size_t const p,
+  value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+  value_t const*const b, size_t const*const nb,
+  value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+  )
 ```
 
 where 
@@ -68,52 +68,67 @@ Please have a look at the test folder which contains unit tests for almost every
 
 int main()
 {
-	using value_t  = float;
-	using tensor_t = std::vector<value_t>; // or std::array<value_t,N>
-	using vector_t = std::vector<std::size_t>; // or see 
-	
-	auto na = vector_t{4,3,2};
-	auto nb = vector_t{3};
-	auto nc = vector_t{4,2};
-	
-	auto a = tensor_t(4*3*2,0.0f); 	std::iota(a.begin(),a.end(),1.0f);
-	auto b = tensor_t(3    ,1.0f);
-	auto c = tensor_t(4*2  ,0.0f);
-	
-	auto wa = vector_t{1,4,12};
-	auto wc = vector_t{1,4,12};
-	
-	auto pia = vector_t{2,1,3}; // 2nd-order format, i.e. row-major
-	auto pic = vector_t{2,1}; // 2nd-order format, i.e. row-major
-	
-	auto p = 3;
-	auto q = 2;
-	
+  using value_t  = float;
+  using tensor_t = std::vector<value_t>; // or std::array<value_t,N>
+  using vector_t = std::vector<std::size_t>; // or see 
 
-	tlib::tensor_times_vector_large_block(q, p,   a, na, wa, pia,    b, nb,    c, nc, wc, pic  );
-	
-	/*
-		a = 
-		{
-			1  2  3  | 13 14 15
-			4  5  6  | 16 17 18
-			7  8  9  | 19 20 21
-			10 11 12 | 22 23 24
-		}
-		
-		b = { 1 1 1}
-		
-		c = 
-		{
-			1+2+3    | 13+14+15
-			4+5+6    | 16+17+18
-			7+8+9    | 19+20+21
-			10+11+12 | 22+23+24
-		}
-	*/
+  auto na = vector_t{4,3,2};
+  auto nb = vector_t{3};
+  auto nc = vector_t{4,2};
+
+  auto a = tensor_t(4*3*2,0.0f);
+  std::iota(a.begin(),a.end(),1.0f);
+  auto b = tensor_t(3    ,1.0f);
+  auto c = tensor_t(4*2  ,0.0f);
+
+  auto wa = vector_t{1,4,12};
+  auto wc = vector_t{1,4,12};
+
+  auto pia = vector_t{2,1,3}; // 2nd-order format, i.e. row-major
+  auto pic = vector_t{2,1}; // 2nd-order format, i.e. row-major
+
+  auto p = 3;
+  auto q = 2;
+
+/*
+  a = 
+  { 1  2  3  | 13 14 15
+    4  5  6  | 16 17 18
+    7  8  9  | 19 20 21
+    10 11 12 | 22 23 24 };
+
+  b = { 1 1 1} ;
+*/
+
+
+  tlib::tensor_times_vector_large_block(q, p,   a, na, wa, pia,    b, nb,    c, nc, wc, pic  );
+
+/*
+  c = 
+  { 1+2+3    | 13+14+15
+    4+5+6    | 16+17+18
+    7+8+9    | 19+20+21
+    10+11+12 | 22+23+24 };
+*/
 }
 ```
 
+# Citation
 
+If you want to refer to TTV as part of a research paper, please cite the [article (https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3):
+
+```
+@inproceedings{ttv:bassoy:2019,
+  author="Bassoy, Cem",
+  editor="Rodrigues, Jo{\~a}o M. F. and Cardoso, Pedro J. S. and Monteiro, J{\^a}nio and Lam, Roberto and Krzhizhanovskaya, Valeria V. and Lees, Michael H. and Dongarra, Jack J. and Sloot, Peter M.A.",
+  title="Design of a High-Performance Tensor-Vector Multiplication with BLAS",
+  booktitle="Computational Science -- ICCS 2019",
+  year="2019",
+  publisher="Springer International Publishing",
+  address="Cham",
+  pages="32--45",
+  isbn="978-3-030-22734-0"
+}
+``` 
 
 
