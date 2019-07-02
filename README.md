@@ -45,14 +45,14 @@ where
 * `q` is the contraction mode with `1<=q<=p`,
 * `a` points to the contiguously stored input tensor,
 * `na` points to the shape tuple of `a` with `na[r]>=1`,
-* `wa` points to a stride tuple of `a` which is computed w.r.t `na` and `pia`
-* `pia` points to a layout (permutation) tuple of `a`
+* `wa` points to the stride tuple of `a` which is computed w.r.t `na` and `pia`
+* `pia` points to the layout (permutation) tuple of `a`
 * `b` points to the contiguously stored input vector of length `nb[0]`,
 * `nb` points to the shape tuple of `b` with `nb[0]>=1`,
 * `c` points to the contiguously stored output tensor,
 * `nc` points to the shape tuple of `c` with `nc[r]>=1`,
-* `wc` points to a stride tuple of `c` which is computed w.r.t `nc` and `pic`
-* `pic` points to a layout (permutation) tuple of `c`
+* `wc` points to the stride tuple of `c` which is computed w.r.t `nc` and `pic`
+* `pic` points to the layout (permutation) tuple of `c`
 
 There are auxiliary functions to compute shape, stride and layout tuples.
 
