@@ -77,7 +77,6 @@ int main()
   auto nc = vector_t{4,2};  // also: auto nc = tlib::detail::generate_output_shape(na,2); 
 
   auto a = tensor_t(4*3*2,0.0f); 
-  std::iota(a.begin(),a.end(),1.0f);
   auto b = tensor_t(3    ,1.0f);
   auto c = tensor_t(4*2  ,0.0f);
 
@@ -90,6 +89,8 @@ int main()
   auto p = 3;
   auto q = 2;
 
+  std::iota(a.begin(),a.end(),1.0f);
+
 /*
   a = 
   { 1  5  9  | 13 17 21
@@ -99,7 +100,6 @@ int main()
 
   b = { 1 1 1 } ;
 */
-
 
   tlib::tensor_times_vector_large_block(q, p,   a, na, wa, pia,    b, nb,    c, nc, wc, pic  );
 
