@@ -210,7 +210,7 @@ TEST_F(LayoutTest, output_layout)
 				
 				const auto imode = tlib::detail::inverse_mode(layout_in.begin(), layout_in.end(), mode)-1;
 				
-				ASSERT_TRUE(0 <= imode  || imode<order);
+				ASSERT_TRUE(imode<order);
 				
 				const auto min1 = std::min(imode  ,order-1);
 //				const auto min2 = std::min(imode+1,order-1);
