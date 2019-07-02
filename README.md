@@ -57,7 +57,6 @@ where
 There are auxiliary functions to compute shape, stride and layout tuples.
 
 ## Usage
-Please have a look at the test folder which contains unit tests for almost every function in this library.
 
 ```cpp
 #include <tlib/ttv.h>
@@ -112,6 +111,7 @@ int main()
 */
 }
 ```
+You can also have a look at the test folder which contains unit tests for almost every function in this library.
 
 # Citation
 
