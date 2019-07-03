@@ -65,15 +65,17 @@ inline void check_mtv_help(
 	std::cout << "c = ";
 	std::copy(c.begin(),c.end(),std::ostream_iterator<value_type>(std::cout," "));
 	std::cout << std::endl;
-	
+*/	
+
+	auto fn = [n](auto i){return (i*n*(i*n+1))/2};
 	
 	for(auto i = 1ul; i <= m; ++i){		
-		const auto j = (i*n*(i*n+1))/2;				
-		const auto k =  i>0ul ? ((i-1)*n*((i-1)*n+1))/2  : 0ul;		
+		const auto j = fn(i);				
+		const auto k =  i>0ul ? fn(i-1) : 0ul;		
 		const auto sum = j-k;
 		EXPECT_EQ( c[i-1], sum );
 	}
-*/	
+
 
 }
 

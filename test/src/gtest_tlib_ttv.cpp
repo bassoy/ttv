@@ -25,212 +25,98 @@
 #include <sstream>
 
 /*
-
-template<class size_t, unsigned rank>
-static inline auto generate_shapes_help(std::vector<std::vector<size_t>>& shapes,
-										std::vector<size_t> const& start,
-										std::vector<size_t> shape,
-										std::vector<size_t> const& dims)
+template<class value_type, class size_type>
+inline void 
+ttv_init(
+	const size_type r,
+	const size_type m_1,
+	size_type& j,
+	size_type& k,
+	std::vector<value_type> & a, 
+	std::vector<size_type> const& na, 
+	std::vector<size_type> const& wa, 
+	std::vector<size_type> const& pia)
 {
-	if constexpr ( rank > 0 ){
-		for(auto j = 0ul, c = start.at(rank); j < dims.at(rank); ++j, c*=2){
-			shape.at(rank) = c;
-			generate_shapes_help<rank-1>(shapes, start, shape, dims);
-		}
-	}
+	if(r==m_1)
+		for(auto i = 0ul; i < na[pia[0]-1]; ++i, ++j)
+			a[j] = k++;
 	else
-	{
-		for(auto j = 0ul, c = start.at(rank); j < dims.at(rank); ++j, c*=2){
-			shape.at(rank) = c;
-			shapes.push_back(shape);
-		}
-	}
+		for(auto i = 0ul; i < na[pia[r-1]-1]; ++i, j+=wa[pia[r-1]-1])
+			ttv_init(r-1,m_1,j,k, a, na, wa, pia);
 }
 
-template<size_t rank>
-static inline auto generate_shapes(std::vector<size_t> const& start, std::vector<size_t> const& dims)
-{
-	std::vector<std::vector<size_t>> shapes;
-	static_assert (rank!=0,"Static Error in fhg::gtest_transpose: Rank cannot be zero.");
-	std::vector<size_t> shape(rank);
-	if(start.size() != rank)
-		throw std::runtime_error("Error in fhg::gtest_transpose: start shape must have length Rank.");
-	if(dims.size() != rank)
-		throw std::runtime_error("Error in fhg::gtest_transpose: dims must have length Rank.");
 
-	generate_shapes_help<rank-1>(shapes, start, shape, dims);
-	return shapes;
-}
-
-template<size_t Rank>
-static inline auto generate_permutations()
+template<class value_type, class size_type, class function_type>
+inline auto 
+ttv_check(
+	const size_type r,
+	const size_type m_1,
+	const size_type j,	
+	std::vector<value_type> & a, 
+	std::vector<size_type> const& na, 
+	std::vector<size_type> const& wa, 
+	std::vector<size_type> const& pia
+	function_type&& compute_element)
 {
-	auto f = 1ul;
-	for(auto i = 2ul; i <= Rank; ++i)
-		f*=i;
-	std::vector<std::vector<std::size_t>> layouts ( f );
-	std::vector<std::size_t> current(Rank);
-	std::iota(current.begin(), current.end(), std::size_t(1));
-	for(auto i = 0ul; i < f; ++i){
-		layouts.at(i) = current;
-		std::next_permutation(current.begin(), current.end());
-	}
-	return layouts;
+	if(r==m_1)
+		for(auto i = 0ul; i < na[pia[0]-1]; ++i, ++j)
+			EXPECT_TRUE(a[j],compute_element(j));
+	else
+		for(auto i = 0ul; i < na[pia[r-1]-1]; ++i, j+=wa[pia[r-1]-1])
+			j = ttv_check(r-1,m_1,j, a, na, wa, pia,std::move(compute_element));
+	return j;
 }
 
 
 
 
 
-template<class size_t>
-static inline auto get_shape_out(const size_t mode, std::vector<size_t> const& na )
+template<class value_type, class size_type, class function_type>
+inline void 
+check_ttv_help(		
+		size_type const mode,
+		size_type const order,
+		std::vector<value_type> const& a,
+		std::vector<value_type> const& b,
+		std::vector<size_type> const& na,
+		std::vector<size_type> const& pia,
+		function_type&& tensor_function)
 {
-	auto const ranka = na.size();
-	assert(ranka >= 2 );
-	assert(mode>0ul && mode <= ranka);
-	auto const rankc = ranka-1;
-	auto nc = std::vector<size_t>(rankc,1);
-	for(auto i = 0u;       i < (mode-1) && i < nc.size(); ++i)  nc.at(i) = na.at(i);
-	for(auto i = (mode-1); i < rankc;                     ++i)  nc.at(i) = na.at(i+1);
+	
+	assert(1 < order);
+	assert(1 <= mode && mode <= order);
 
-	if(rankc == 1)
-		nc.push_back(1);
-
-	return nc;
-}
-
-
-
-template<class T>
-static inline void check_tensor_times_vector_help(
-		size_t const mode,
-		fhg::tensor<T> const& A,
-		fhg::tensor<T> const& b)
-{
-
-	auto layout_out = get_layout_out(mode,A.layout());
-	auto shape_out = get_shape_out(mode,A.extents());
-
-	fhg::tensor<T> C (shape_out, layout_out);
-	fhg::tensor<T> D (shape_out, layout_out);
-	fhg::tensor<T> E (shape_out, layout_out);
-	fhg::tensor<T> F (shape_out, layout_out);
-	fhg::tensor<T> G (shape_out, layout_out);
-	fhg::tensor<T> H (shape_out, layout_out);
-	fhg::tensor<T> I (shape_out, layout_out);
-	fhg::tensor<T> J (shape_out, layout_out);
-	fhg::tensor<T> K (shape_out, layout_out);
-	fhg::tensor<T> L (shape_out, layout_out);
-	fhg::tensor<T> M (shape_out, layout_out);
-	fhg::tensor<T> N (shape_out, layout_out);
-	fhg::tensor<T> O (shape_out, layout_out);
-	fhg::tensor<T> P (shape_out, layout_out);
-	C = 0; D = 0; E = 0, F = 0, G = 0, H = 0, I = 0, J = 0, K = 0, L = 0, M = 0, N = 0, O = 0, P = 0;
-
-
-	C = A.times_vector(b, mode);
-
-	fhg::tensor_times_vector(mode, A.rank(), A.mbegin(), b.mbegin(), D.mbegin() );
-	fhg::tensor_times_vector(mode, A.rank(),
-							 E.data(), E.extents().data(), E.strides().data(),
-							 A.data(), A.extents().data(), A.strides().data(),
-							 b.data(), b.extents().data(), b.strides().data());
-
-
-	fhg::tensor_times_vector_block(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				H.data(), H.extents().data(), H.strides().data(), H.layout().data());
-
-	fhg::tensor_times_vector_large_block(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				F.data(), F.extents().data(), F.strides().data(), F.layout().data());
-
-	fhg::tensor_times_vector_large_block_parallel(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				K.data(), K.extents().data(), K.strides().data(), K.layout().data());
-
-	fhg::tensor_times_vector_large_block_parallel_blas(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				L.data(), L.extents().data(), L.strides().data(), L.layout().data());
-
-
-	fhg::tensor_times_vector_large_block_parallel_blas_2(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				M.data(), M.extents().data(), M.strides().data(), M.layout().data());
-
-	fhg::tensor_times_vector_large_block_parallel_blas_3(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				P.data(), P.extents().data(), P.strides().data(), P.layout().data());
-
-	fhg::tensor_times_vector_small_block(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				G.data(), G.extents().data(), G.strides().data(), G.layout().data());
-
-	fhg::tensor_times_vector_small_block_parallel(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				I.data(), I.extents().data(), I.strides().data(), I.layout().data());
-
-	fhg::tensor_times_vector_small_block_parallel_blas(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				J.data(), J.extents().data(), J.strides().data(), J.layout().data());
-
-	fhg::tensor_times_vector_small_block_parallel_blas_3(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				O.data(), O.extents().data(), O.strides().data(), O.layout().data());
-
-	fhg::tensor_times_vector_small_block_parallel_blas_4(
-				mode, A.rank(),
-				A.data(), A.extents().data(), A.strides().data(), A.layout().data(),
-				b.data(), b.extents().data(),
-				N.data(), N.extents().data(), N.strides().data(), N.layout().data());
-
-
-
-	//	if(D != H){
-//			fhg::mcout << "J = " << J << std::endl << std::endl;
-//			fhg::mcout << "N = " << N << std::endl << std::endl;
-	//	}
-
-	if(D != G){
-		fhg::mcout << "D = " << D << std::endl << std::endl;
-		fhg::mcout << "G = " << G << std::endl << std::endl;
-	}
-
-	if(D != J){
-		fhg::mcout << "D = " << D << std::endl << std::endl;
-		fhg::mcout << "J = " << J << std::endl << std::endl;
-	}
-
-	if(D != M){
-		fhg::mcout << "D = " << D << std::endl << std::endl;
-		fhg::mcout << "M = " << M << std::endl << std::endl;
-	}
-
-	EXPECT_TRUE(D==C);
+	auto pic = tlib::detail::generate_output_layout(pia,mode);
+	auto nc  = tlib::detail::get_output_shape      (na ,mode);
+	
+	auto nnc = std::accumulate(nc.begin(),nc.end(), std::multiplies<>(), 1u);
+	
+	auto c = std::vector(nnc,0);
+	
+	tensor_function(mode, order, 
+		a.data(), na.data(), wa.data(), pia.data(),
+		b.data(), nb.data(),
+		c.data(), nc.data(), wc.data(), pic.data());
+	
+	auto const n = na.at(mode-1);
+	
+	auto compute_element = [n](auto i){return (i*n*(i*n+1))/2};
+	
+	ttv_check(  mode, order, 
+		c.data(), nc.data(), wc.data(), pic.data(), compute_element )
+	
+	for(auto i = 1ul; i <= m; ++i){		
+		const auto j = fn(i);				
+		const auto k =  i>0ul ? fn(i-1) : 0ul;		
+		const auto sum = j-k;
+		EXPECT_EQ( c[i-1], sum );
+	}	
+	
+	
+	EXPECT_TRUE(std::equal();
 	EXPECT_TRUE(D==E);
 	EXPECT_TRUE(D==F);
 	EXPECT_TRUE(D==G);
-//	EXPECT_TRUE(D==H);
 	EXPECT_TRUE(D==I);
 	EXPECT_TRUE(D==J);
 	EXPECT_TRUE(D==K);
@@ -241,8 +127,9 @@ static inline void check_tensor_times_vector_help(
 	EXPECT_TRUE(D==P);
 
 }
+*/
 
-
+/*
 template<class value_type, size_t rank>
 static inline auto check_tensor_times_vector(size_t init, size_t steps)
 {
