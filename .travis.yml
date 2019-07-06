@@ -45,6 +45,7 @@ addons:
     - clang++-6.0
     - libopenblas-*
     - libomp5*
+    - libomp-dev
     - libgomp1
     - libgtest-dev
     - cmake
