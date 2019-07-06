@@ -53,6 +53,9 @@ addons:
 install:
   - git clone -b master https://github.com/bassoy/ttv ttv
   - cd ttv
+  - export CXX=${COMPILER}
+  - ${CXX} --version
+    
 #  - dpkg -L libopenblas-dev
 #  - dpkg -L libomp5
 #  - dpkg -L libgomp1

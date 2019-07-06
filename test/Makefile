@@ -1,5 +1,8 @@
-CC :=g++
-#CC :=clang++
+#CXX :=g++
+#CXX :=clang++
+
+
+
 CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -g -O0 -fprofile-arcs -ftest-coverage -fno-inline -pthread -fopenmp -DUSE_OPENBLAS # -Ofast
 
 INTEL_DIR :=/opt/intel/mkl
@@ -22,10 +25,11 @@ OBJSC   = $(addprefix build/,$(OBJS6))
 
 TARGET := bin/main
 $(TARGET): $(OBJSC)
-	$(CC) $(CXX_FLAGS) $(OBJSC) $(LIBS) -o $(TARGET)
+	$(CXX) $(CXX_FLAGS) $(OBJSC) $(LIBS) -o $(TARGET)
+	$(CXX) --version
 
 build/%.o : src/%.cpp
-	$(CC) $(CXX_FLAGS) -c $(INCS)  $< -o $@
+	$(CXX) $(CXX_FLAGS) -c $(INCS)  $< -o $@
 
 .PHONY : clean
 
