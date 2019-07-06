@@ -67,7 +67,7 @@ inline void check_mtv_help(
 	std::cout << std::endl;
 */	
 
-	auto fn = [n](auto i){return (i*n*(i*n+1))/2};
+	auto fn = [n](auto i){ return (i*n*(i*n+1))/2; };
 	
 	for(auto i = 1ul; i <= m; ++i){		
 		const auto j = fn(i);				
