@@ -1,7 +1,7 @@
 #CXX :=g++
 #CXX :=clang++
 
-CXX_FLAGS +=-Wextra -Wall -Wpedantic -Ofast -std=c++17 -pthread -fopenmp -DUSE_OPENBLAS # -Ofast
+CXX_FLAGS +=-Wextra -Wall -Wpedantic -Ofast -std=c++17 -pthread -fopenmp # -Ofast -DUSE_OPENBLAS 
 # -g -O0 -fprofile-arcs -ftest-coverage -fno-inline 
 
 INTEL_DIR :=/opt/intel/mkl
