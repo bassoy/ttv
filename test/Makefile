@@ -1,9 +1,8 @@
 #CXX :=g++
 #CXX :=clang++
 
-
-
-CXX_FLAGS +=-Wextra -Wall -Wpedantic -std=c++17 -g -O0 -fprofile-arcs -ftest-coverage -fno-inline -pthread -fopenmp -DUSE_OPENBLAS # -Ofast
+CXX_FLAGS +=-Wextra -Wall -Wpedantic -Ofast -std=c++17 -pthread -fopenmp -DUSE_OPENBLAS # -Ofast
+# -g -O0 -fprofile-arcs -ftest-coverage -fno-inline 
 
 INTEL_DIR :=/opt/intel/mkl
 INTEL_INC :=-DMKL_ILP64 -m64 -I$(INTEL_DIR)/include
@@ -26,7 +25,7 @@ OBJSC   = $(addprefix build/,$(OBJS6))
 TARGET := bin/main
 $(TARGET): $(OBJSC)
 	$(CXX) $(CXX_FLAGS) $(OBJSC) $(LIBS) -o $(TARGET)
-	$(CXX) --version
+#	$(CXX) --version
 
 build/%.o : src/%.cpp
 	$(CXX) $(CXX_FLAGS) -c $(INCS)  $< -o $@

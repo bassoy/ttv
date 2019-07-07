@@ -757,7 +757,8 @@ private:
 			}
 		}
 		else {
-			gemv_col(a,b,c, na_m, wa_m, inv_pia_m, na, wa, pia,  nc, wc, pic);
+			//gemv_col(a,b,c, na_m, wa_m, inv_pia_m, na, wa, pia,  nc, wc, pic);
+			gemv_col(a,b,c, nn, na_m, wa_m);
 		}
 	}
 

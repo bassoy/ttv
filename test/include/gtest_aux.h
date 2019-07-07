@@ -25,7 +25,7 @@
 namespace tlib::gtest
 {
 
-template<class size_type, size_type rank>
+template<class size_type, unsigned rank>
 inline auto generate_shapes_help(
 	std::vector<std::vector<size_type>>& shapes,
 	std::vector<size_type> const& start,

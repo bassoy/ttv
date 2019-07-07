@@ -212,7 +212,7 @@ template<class value_t>
 inline void dot(
 	value_t const*const __restrict a,
 	value_t const*const __restrict b,
-	value_t const*const __restrict c,
+	value_t      *const __restrict c,
 	size_t const M) // nn
 {
 	auto sum = value_t{};
@@ -228,7 +228,7 @@ template<class value_t>
 inline void dot_parallel(
 	value_t const*const __restrict a,
 	value_t const*const __restrict b,
-	value_t const*const __restrict c,
+	value_t      *const __restrict c,
 	size_t const M) // nn
 {
 	auto sum = value_t{};
@@ -281,7 +281,7 @@ struct MatrixTimesVector<value_t,std::tuple<>>
 template<class value_t>
 struct MatrixTimesVector<value_t,std::tuple<parallel>>
 {
-	static void run_parallel(
+	static void run(
 			size_t const m, size_t const p,
 			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,

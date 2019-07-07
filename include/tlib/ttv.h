@@ -90,7 +90,7 @@ void tensor_times_vector_large_block(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
-	check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::large_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -105,6 +105,7 @@ void tensor_times_vector_large_block_parallel(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::large_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -119,6 +120,7 @@ void tensor_times_vector_large_block_parallel_blas(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::large_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -148,6 +150,7 @@ void tensor_times_vector_small_block(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::small_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -178,6 +181,7 @@ void tensor_times_vector_small_block_parallel_blas_3(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::small_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas_3(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -194,6 +198,7 @@ void tensor_times_vector_small_block_parallel_blas_4(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::small_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas_4(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -208,13 +213,14 @@ void tensor_times_vector_small_block_parallel_blas(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::small_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
 }
 
 
-
+/*
 template <class value_t>
 void tensor_times_vector_large_block_parallel_blas_2(
 		size_t const m,
@@ -228,7 +234,7 @@ void tensor_times_vector_large_block_parallel_blas_2(
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas_2(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
 }
-
+*/
 
 template <class value_t>
 void tensor_times_vector_large_block_parallel_blas_3(
@@ -239,6 +245,7 @@ void tensor_times_vector_large_block_parallel_blas_3(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::large_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas_3(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
@@ -254,6 +261,7 @@ void tensor_times_vector_large_block_parallel_blas_4(
 		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
+	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
 	using optimization_tuple_t = std::tuple<detail::large_block>;
 	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
 	function_t::run_parallel_blas_4(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);

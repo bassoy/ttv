@@ -80,10 +80,10 @@ script:
   - ./test/bin/main
 
 after_success:
-  - .ci/report_coverage.sh
-  - curl -s https://codecov.io/bash > cov.sh
-  - chmod +x cov.sh
-  - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
+#  - .ci/report_coverage.sh
+#  - curl -s https://codecov.io/bash > cov.sh
+#  - chmod +x cov.sh
+#  - ./cov.sh -f coverage.info || echo "Codecov did not collect coverage reports"
 
 
 notifications:
