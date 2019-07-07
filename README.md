@@ -115,7 +115,7 @@ You can also have a look at the test folder which contains unit tests for almost
 
 # Citation
 
-If you want to refer to TTV as part of a research paper, please cite the [article (https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3):
+If you want to refer to TTV as part of a research paper, please cite the [article] (https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3)
 
 ```
 @inproceedings{ttv:bassoy:2019,
