@@ -131,17 +131,17 @@ int main()
 
   tlib::tensor_times_vector_large_block(
   	q, p,
-  	a.data(), na.data(), wa.data(), pia.data(),
-  	b.data(), nb.data(),
+  	a. data(), na.data(), wa.data(), pia.data(),
+  	b. data(), nb.data(),
   	c1.data(), nc.data(), wc.data(), pic.data()  );
   	
   tlib::tensor_times_vector_small_block_parallel_blas_3(
   	q, p, 
-  	a.data(), na.data(), wa.data(), pia.data(),
-  	b.data(), nb.data(),
+  	a. data(), na.data(), wa.data(), pia.data(),
+  	b. data(), nb.data(),
   	c2.data(), nc.data(), wc.data(), pic.data()  );
  
-	std::cout << "c1 = [ "; std::copy(c1.begin(), c1.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
+  std::cout << "c1 = [ "; std::copy(c1.begin(), c1.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
   std::cout << "c2 = [ "; std::copy(c2.begin(), c2.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
 
 /*
@@ -159,10 +159,8 @@ int main()
 ```bash
 CC="g++"; 
 INCLUDE_DIR="../include/"; 
-# include either -DUSE_OPENBLAS or -DUSE_INTELBLAS for fast execution
-FLAGS="-std=c++17 -Ofast"
-${CC} -I${INCLUDE_DIR} ${FLAGS} main.cpp -o main
-./main
+FLAGS="-std=c++17 -Ofast" # include either -DUSE_OPENBLAS or -DUSE_INTELBLAS for fast execution
+${CC} -I${INCLUDE_DIR} ${FLAGS} main.cpp -o main && ./main
 ```
 
 You can also have a look at the test folder which contains unit tests for almost every function in this repository.
