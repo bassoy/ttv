@@ -58,26 +58,51 @@ There are auxiliary functions to compute shape, stride and layout tuples.
 
 ## Usage
 
+### Preparation (Ubuntu 18.04 with OpenBLAS and OpenMP)
+
+```bash
+sudo apt install libopenblas-* libomp5*
+```
+
+### Clone from Github
+```bash
+git clone https://github.com/bassoy/ttv.git
+cd ttv
+```
+
+### Create an Example File
+
+```bash
+mkdir example && cd example
+touch main.cpp
+```
+
 ```cpp
+
+/*main.cpp*/
+
 #include <tlib/ttv.h>
 
 #include <vector>
 #include <numeric>
-
+#include <iostream>
 
 int main()
 {
-  using value_t  = float;
-  using tensor_t = std::vector<value_t>; // or std::array<value_t,N>
-  using vector_t = std::vector<std::size_t>; // or see 
+  using value_t    = float;
+  using size_t     = std::size_t;
+  using tensor_t   = std::vector<value_t>;     // or std::array<value_t,N>
+  using vector_t   = std::vector<size_t>;
+  using iterator_t = std::ostream_iterator<value_t>;
 
   auto na = vector_t{4,3,2};
   auto nb = vector_t{3};
   auto nc = vector_t{4,2};  // also: auto nc = tlib::detail::generate_output_shape(na,2); 
 
-  auto a = tensor_t(4*3*2,0.0f); 
-  auto b = tensor_t(3    ,1.0f);
-  auto c = tensor_t(4*2  ,0.0f);
+  auto a  = tensor_t(4*3*2,0.0f); 
+  auto b  = tensor_t(3    ,1.0f);
+  auto c1 = tensor_t(4*2  ,0.0f);
+  auto c2 = tensor_t(4*2  ,0.0f);
 
   auto pia = vector_t{1,2,3}; // also: auto pia = tlib::detail::generate_first_order_layout(3,2); 
   auto pic = vector_t{1,2};   // also: auto pic = tlib::detail::generate_output_layout(pia,2); 
@@ -85,10 +110,13 @@ int main()
   auto wa = vector_t{1,4,12}; // also: auto wa = tlib::detail::generate_strides(na,pia); 
   auto wc = vector_t{1,4};    // also: auto wa = tlib::detail::generate_strides(nc,pic); 
 
-  auto p = 3;
-  auto q = 2;
+  auto p = size_t{3ul};
+  auto q = size_t{2ul};
 
-  std::iota(a.begin(),a.end(),1.0f);
+  std::iota(a.begin(),a.end(),value_t{1});
+  
+  std::cout << "a="; std::copy(a.begin(), a.end(), iterator_t(std::cout, " ")); std::cout << std::endl;
+  std::cout << "b="; std::copy(b.begin(), b.end(), iterator_t(std::cout, " ")); std::cout << std::endl;
 
 /*
   a = 
@@ -100,7 +128,21 @@ int main()
   b = { 1 1 1 } ;
 */
 
-  tlib::tensor_times_vector_large_block(q, p,   a, na, wa, pia,    b, nb,    c, nc, wc, pic  );
+
+  tlib::tensor_times_vector_large_block(
+  	q, p,
+  	a.data(), na.data(), wa.data(), pia.data(),
+  	b.data(), nb.data(),
+  	c1.data(), nc.data(), wc.data(), pic.data()  );
+  	
+  tlib::tensor_times_vector_small_block_parallel_blas_3(
+  	q, p, 
+  	a.data(), na.data(), wa.data(), pia.data(),
+  	b.data(), nb.data(),
+  	c2.data(), nc.data(), wc.data(), pic.data()  );
+ 
+	std::cout << "c1 = [ "; std::copy(c1.begin(), c1.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
+  std::cout << "c2 = [ "; std::copy(c2.begin(), c2.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
 
 /*
   c = 
@@ -111,7 +153,19 @@ int main()
 */
 }
 ```
-You can also have a look at the test folder which contains unit tests for almost every function in this library.
+
+### Compile and Execute the Example File
+
+```bash
+CC="g++"; 
+INCLUDE_DIR="../include/"; 
+# include either -DUSE_OPENBLAS or -DUSE_INTELBLAS for fast execution
+FLAGS="-std=c++17 -Ofast"
+${CC} -I${INCLUDE_DIR} ${FLAGS} main.cpp -o main
+./main
+```
+
+You can also have a look at the test folder which contains unit tests for almost every function in this repository.
 
 # Citation
 
