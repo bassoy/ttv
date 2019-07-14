@@ -19,50 +19,24 @@
 #define FHG_TENSOR_VECTOR_MULTIPLICATION_H
 
 #include "detail/tensor_times_vector.h"
-
-namespace tlib::detail
-{
-template <class value_t, class size_t>
-inline void check_pointers(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	if(p==0)
-		throw std::runtime_error("Error in tlib::check_pointers: rank should be greater zero.");
-
-	if(m==0 || m>p)
-		throw std::runtime_error("Error in tlib::check_pointers: contraction mode should be greater zero or less than or equal to p.");
-
-	if(a==nullptr || b==nullptr || c==nullptr)
-		throw std::runtime_error("Error in tlib::check_pointers: pointer to the tensors should not be zero.");
-
-	if(na==nullptr || nb==nullptr || nc==nullptr)
-		throw std::runtime_error("Error in tlib::check_pointers: pointer to the extents should not be zero.");
-
-	if(wa==nullptr  || wc==nullptr)
-		throw std::runtime_error("Error in tlib::check_pointers: pointer to the strides should not be zero.");
-
-	if(pia==nullptr || pic==nullptr)
-		throw std::runtime_error("Error in tlib::check_pointers: pointer to the permutation tuple should not be zero.");
-
-	if(na[m-1] != nb[0])
-		throw std::runtime_error("Error in tlib::tensor_times_vector_coalesced: contraction dimensions are not equal.");
-}
-}
-
-
+#include "detail/tensor.h"
 
 namespace tlib
 {
-
 		
 
 /**
+ * \brief Implements a tensor-times-vector-multiplication
  *
+ * Performs a slice-times-vector operation in the most inner recursion level with subtensors of A and C
+ *
+ * It is a more sophisticated 2d-slice-times-vector implementation.
+ *
+ * @tparam value_t           type of the elements which is usually an floating point type, i.e. float, double or int
+ * @tparam size_t size       type of the extents, strides and layout elements which is usually std::size_t
+ * @tparam execution_policy  type of the execution policy which can be tlib::execution::seq, tlib::execution::par or tlib::execution::blas.
+ * @tparam slicing_policy    type of the slicing policy which can be tlib::slicing::small or tlib::slicing::large
+ * @tparam fusion_policy     type of the loop fusion policy which can be tlib::loop_fusion::none, tlib::loop_fusion::outer or tlib::loop_fusion::all
  * \param m  mode of the contraction with 1 <= m <= p
  * \param p  rank of the array A with p > 0.
  * \param a  pointer to the array A.
@@ -76,195 +50,61 @@ namespace tlib
  * \param c  pointer to the array C.
  * \param nc extents of the array C. Length of the tuple must be p-1.
  * \param wc strides of the array C. Length of the tuple must be p-1.
- * \param pic permutations of the indices of array C. Length of the tuple must be p-1.
+ * \param pic permutations of the indices of array C. Length of the tuple must be p-1. 
+ 
 */
-
-
-
-
-template <class value_t>
-void tensor_times_vector_large_block(
-		size_t const m, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
+template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
+inline void tensor_times_vector(
+	execution_policy ep, slicing_policy sp, fusion_policy fp,
+	size_t const q, size_t const p,
+	value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+	value_t const*const b, size_t const*const nb,
+	value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+	)
 {
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
 
+	if(p==0)        throw std::runtime_error("Error in tlib::tensor_times_vector: input tensor order should be greater zero.");
+	if(q==0 || q>p) throw std::runtime_error("Error in tlib::tensor_times_vector: contraction mode should be greater zero or less than or equal to p.");
+	if(a==nullptr) 	throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input tensor A should not be zero.");
+	if(b==nullptr) 	throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input vector B should not be zero.");
+	if(c==nullptr) 	throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to output tensor C should not be zero.");
 
-template <class value_t>
-void tensor_times_vector_large_block_parallel(
-		size_t const m, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
+	if(na==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input tensor shape vector na should not be zero.");
+	if(nb==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input vector shape vector nb should not be zero.");
+	if(nc==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to output tensor shape vector nc should not be zero.");
 
+	if(wa==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input tensor stride vector wa should not be zero.");
+	if(wc==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to output tensor stride vector wc should not be zero.");
 
-template <class value_t>
-void tensor_times_vector_large_block_parallel_blas(
-		size_t const m, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
+	if(pia==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to input tensor permutation vector pia should not be zero.");
+	if(pic==nullptr) throw std::runtime_error("Error in tlib::tensor_times_vector: pointer to output tensor permutation vector pic should not be zero.");
+
+	if(na[q-1] != nb[0]) throw std::runtime_error("Error in tlib::tensor_times_vector: contraction dimension of A and B are not equal.");
+	
+	if(!detail::is_valid_shape(na,na+p     )) throw std::runtime_error("Error in tlib::tensor_times_vector: shape vector of A is not valid.");
+	if(!detail::is_valid_shape(nc,nc+p-1   )) throw std::runtime_error("Error in tlib::tensor_times_vector: shape vector of C is not valid.");
+
+	if(!detail::is_valid_layout(pia,pia+p  )) throw std::runtime_error("Error in tlib::tensor_times_vector: layout vector of A is not valid.");
+	if(!detail::is_valid_layout(pic,pic+p-1)) throw std::runtime_error("Error in tlib::tensor_times_vector: layout vector of C is not valid.");	
+
+	if(!detail::is_valid_strides(pia,pia+p,   wa)) throw std::runtime_error("Error in tlib::tensor_times_vector: stride vector of A is not valid.");
+	if(!detail::is_valid_strides(pic,pic+p-1, wc)) throw std::runtime_error("Error in tlib::tensor_times_vector: stride vector of C is not valid.");
+
+	detail::ttv(ep,sp,fp,  q,p, a,na,wa,pia, b,nb, c,nc,wc,pic);
 }
 
 
 
-template <class value_t>
-void tensor_times_vector_block(
-		size_t const m, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
+template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
+inline void tensor_times_vector(
+	size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
+	execution_policy ep = execution::blas, slicing_policy sp = slicing::small, fusion_policy fp = loop_fusion::all)  
 {
-	using optimization_tuple_t = std::tuple<detail::block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-template <class value_t>
-void tensor_times_vector_small_block(
-		size_t const m, size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::small_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-template <class value_t>
-void tensor_times_vector_small_block_parallel(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	using optimization_tuple_t = std::tuple<detail::small_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-template <class value_t>
-void tensor_times_vector_small_block_parallel_blas_3(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::small_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas_3(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-
-template <class value_t>
-void tensor_times_vector_small_block_parallel_blas_4(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::small_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas_4(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-template <class value_t>
-void tensor_times_vector_small_block_parallel_blas(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::small_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-/*
-template <class value_t>
-void tensor_times_vector_large_block_parallel_blas_2(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas_2(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-*/
-
-template <class value_t>
-void tensor_times_vector_large_block_parallel_blas_3(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas_3(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
-}
-
-
-template <class value_t>
-void tensor_times_vector_large_block_parallel_blas_4(
-		size_t const m,
-		size_t const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
-		)
-{
-	detail::check_pointers( m,p,a,na, wa, pia, b, nb, c, nc, wc, pic );
-	using optimization_tuple_t = std::tuple<detail::large_block>;
-	using function_t = detail::TensorTimesVector<value_t,optimization_tuple_t>;
-	function_t::run_parallel_blas_4(m,p,a,na,wa,pia,b,nb,c,nc,wc,pic);
+	auto c =) tensor<value_t>
+	tensor_times_vector( ep, sp, fp, q, a.order(), 
+		a.data(), a.shape().data(), a.strides().data(), a.layout().data(),
+		b.data(), b.shape().data(),
+		c.data(), c.shape().data(), c.strides().data(), c.layout().data());
 }
 
 

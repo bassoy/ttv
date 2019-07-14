@@ -115,11 +115,11 @@ TEST(MatrixTimesVector, Gemv)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col<value_type>,a,b,cm,na);		
+		check_mtv_help(tlib::detail::gemv_col<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row<value_type>,a,b,rm,na);
+		check_mtv_help(tlib::detail::gemv_row<value_type,size_type>,a,b,rm,na);
 	}
 }
 
@@ -142,11 +142,11 @@ TEST(MatrixTimesVector, GemvParallel)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col_parallel<value_type>,a,b,cm,na);		
+		check_mtv_help(tlib::detail::gemv_col_parallel<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row<value_type>,a,b,rm,na);
+		check_mtv_help(tlib::detail::gemv_row<value_type,size_type>,a,b,rm,na);
 	}
 }
 
@@ -169,11 +169,11 @@ TEST(MatrixTimesVector, GemvBLAS)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col_blas<value_type>,a,b,cm,na);		
+		check_mtv_help(tlib::detail::gemv_col_blas<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row_blas<value_type>,a,b,rm,na);
+		check_mtv_help(tlib::detail::gemv_row_blas<value_type,size_type>,a,b,rm,na);
 	}
 }
 

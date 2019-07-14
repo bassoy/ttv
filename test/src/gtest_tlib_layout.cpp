@@ -36,11 +36,11 @@ TEST_F(LayoutTest, generate_1_order)
 	ASSERT_TRUE(ref_layouts.size() == layouts.size());
 	
 	for(auto i = 0u; i < layouts.size(); ++i){
-		tlib::detail::compute_first_order(layouts[i].begin(), layouts[i].end());	
+		tlib::detail::compute_first_order_layout(layouts[i].begin(), layouts[i].end());	
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));
 		
-		tlib::detail::compute_k_order(layouts[i].begin(), layouts[i].end(),1u);
+		tlib::detail::compute_k_order_layout(layouts[i].begin(), layouts[i].end(),1u);
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));
 		EXPECT_TRUE (tlib::detail::is_valid_layout(layouts[i].begin(), layouts[i].end()));	
@@ -60,7 +60,7 @@ TEST_F(LayoutTest, generate_2_order)
 	ASSERT_TRUE(ref_layouts.size() == layouts.size());
 	
 	for(auto i = 0u; i < layouts.size(); ++i){
-		tlib::detail::compute_k_order(layouts[i].begin(), layouts[i].end(),2u);
+		tlib::detail::compute_k_order_layout(layouts[i].begin(), layouts[i].end(),2u);
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));
 		EXPECT_TRUE (tlib::detail::is_valid_layout(layouts[i].begin(), layouts[i].end()));
@@ -80,7 +80,7 @@ TEST_F(LayoutTest, generate_3_order)
 	ASSERT_TRUE(ref_layouts.size() == layouts.size());
 	
 	for(auto i = 0u; i < layouts.size(); ++i){
-		tlib::detail::compute_k_order(layouts[i].begin(), layouts[i].end(),3u);
+		tlib::detail::compute_k_order_layout(layouts[i].begin(), layouts[i].end(),3u);
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));		
 		EXPECT_TRUE (tlib::detail::is_valid_layout(layouts[i].begin(), layouts[i].end()));
@@ -101,12 +101,12 @@ TEST_F(LayoutTest, generate_4_order)
 	ASSERT_TRUE(ref_layouts.size() == layouts.size());
 	
 	for(auto i = 0u; i < layouts.size(); ++i){
-		tlib::detail::compute_last_order(layouts[i].begin(), layouts[i].end());	
+		tlib::detail::compute_last_order_layout(layouts[i].begin(), layouts[i].end());	
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));		
 		EXPECT_TRUE (tlib::detail::is_valid_layout(layouts[i].begin(), layouts[i].end()));
 				
-		tlib::detail::compute_k_order(layouts[i].begin(), layouts[i].end(),4u);
+		tlib::detail::compute_k_order_layout(layouts[i].begin(), layouts[i].end(),4u);
 		ASSERT_TRUE (layouts[i].size() == ref_layouts[i].size());
 		EXPECT_TRUE (std::equal(layouts[i].begin(),layouts[i].end(),ref_layouts[i].begin()));
 		EXPECT_TRUE (tlib::detail::is_valid_layout(layouts[i].begin(), layouts[i].end()));
@@ -143,7 +143,7 @@ TEST_F(LayoutTest, is_valid_layout)
 		auto layout = layout_t(order,0);
 		for(auto format = 1u; format <= order; ++format)
 		{			
-			tlib::detail::compute_k_order(layout.begin(), layout.end(),format);
+			tlib::detail::compute_k_order_layout(layout.begin(), layout.end(),format);
 			EXPECT_TRUE(tlib::detail::is_valid_layout(layout.begin(), layout.end()));
 		}
 	}
@@ -159,7 +159,7 @@ TEST_F(LayoutTest, inverse_layout)
 		auto inverse_inverse_layout = layout_t(order,0);
 		for(auto format = 1u; format <= order; ++format)
 		{			
-			tlib::detail::compute_k_order(layout.begin(), layout.end(),format);			
+			tlib::detail::compute_k_order_layout(layout.begin(), layout.end(),format);			
 			ASSERT_TRUE(tlib::detail::is_valid_layout(layout.begin(), layout.end()));			
 			tlib::detail::compute_inverse_layout(layout.begin(), layout.end(),inverse_layout.begin());
 			EXPECT_TRUE(tlib::detail::is_valid_layout(inverse_layout.begin(), inverse_layout.end()));
@@ -178,7 +178,7 @@ TEST_F(LayoutTest, inverse_mode)
 		auto layout          = layout_t(order,0);
 		for(auto format = 1u; format <= order; ++format)
 		{
-			tlib::detail::compute_k_order(layout.begin(), layout.end(),format);	
+			tlib::detail::compute_k_order_layout(layout.begin(), layout.end(),format);	
 			ASSERT_TRUE(tlib::detail::is_valid_layout(layout.begin(), layout.end()));
 			for(auto mode = 1u; mode <= order; ++mode)
 			{
@@ -200,7 +200,7 @@ TEST_F(LayoutTest, output_layout)
 		
 		for(auto format = 1u; format <= order; ++format)
 		{
-			tlib::detail::compute_k_order(layout_in.begin(), layout_in.end(),format);			
+			tlib::detail::compute_k_order_layout(layout_in.begin(), layout_in.end(),format);			
 			ASSERT_TRUE(tlib::detail::is_valid_layout(layout_in.begin(), layout_in.end()));
 			
 			for(auto mode = 1u; mode <= order; ++mode)

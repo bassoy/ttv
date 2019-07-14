@@ -55,8 +55,8 @@ inline bool is_valid_layout(InputIt begin, InputIt end)
 	return true;
 }
 
-template<class OutputIt>
-inline void compute_k_order(OutputIt begin, OutputIt end, unsigned k)
+template<class OutputIt, class size_t >
+inline void compute_k_order_layout(OutputIt begin, OutputIt end, size_t k)
 {	
 	auto const n_signed = std::distance(begin,end);
 	
@@ -76,17 +76,25 @@ inline void compute_k_order(OutputIt begin, OutputIt end, unsigned k)
 	for(auto i = m+1u; begin != end   ; ++i, ++begin) *begin = i;
 }
 
+template<class size_t>
+inline auto generate_k_order_layout(size_t p, size_t k)
+{
+	std::vector<size_t> v(p);
+	compute_k_order_layout(v.begin(), v.end(),k);
+	return v;
+}
+
 
 template<class OutputIt>
-inline void compute_first_order(OutputIt begin, OutputIt end)
+inline void compute_first_order_layout(OutputIt begin, OutputIt end)
 {
-	return compute_k_order(begin,end,1u);
+	return compute_k_order_layout(begin,end,1u);
 }	
 
 template<class OutputIt>
-inline void compute_last_order(OutputIt begin, OutputIt end)
+inline void compute_last_order_layout(OutputIt begin, OutputIt end)
 {
-	return compute_k_order(begin,end,0u);
+	return compute_k_order_layout(begin,end,0u);
 }
 
 template<class InputIt, class OutputIt>
@@ -100,6 +108,8 @@ inline void compute_inverse_layout(InputIt begin, InputIt end, OutputIt output)
 	for(auto r = 1u; r <= n; ++r, ++begin)
 		output[*begin-1] = r;
 }
+
+
 
 // returns the position of the specified one-based mode in the layout vector 
 template<class InputIt, class SizeType>
@@ -155,25 +165,10 @@ inline void compute_output_layout(InputIt begin, InputIt end, OutputIt begin2, M
 	assert(0u <= iq && iq < p);	
 	
 	const auto min1 = std::min(iq  ,p-1);
-	//const auto min2 = std::min(iq+1,p-1);
-	
 
 	std::copy(begin   , begin+min1     , begin2);
 	std::copy(begin+iq+1, begin+p        , begin2+iq);
 	std::for_each( begin2, begin2+p-1, [q]( auto& cc ) { if(cc>q) --cc; } );
-	
-	
-/*	
-	for(auto i = 0u;       i < imode && i < rankc; ++i) pic.at(i) = pia.at(i);
-	for(auto i = imode; i < rankc;                 ++i) pic.at(i) = pia.at(i+1);
-
-	for(auto i = 0u; i < rankc; ++i)
-		if(pic.at(i) > mode)
-			--pic.at(i);
-
-	if(pic.size() == 1)
-		pic.push_back(2);
-*/
 
 }
 
@@ -211,37 +206,6 @@ inline auto generate_output_layout(std::array<SizeType,N> const& input_layout, M
 	
 	return output_layout;
 }
-
-
-
-
-/*
-template<class size_t>
-static inline auto get_layout_out(const size_t mode, std::vector<size_t> const& pia )
-{
-	auto const ranka = pia.size();
-	assert(ranka >= 2 );
-	assert(mode>0ul && mode <= ranka);
-	auto const rankc = ranka-1;
-	auto pic = std::vector<size_t>(rankc,1);
-	size_t mode_inv = 0;
-	for(; mode_inv < ranka; ++mode_inv)
-		if(pia.at(mode_inv) == mode)
-			break;
-	assert(mode_inv != ranka);
-
-	for(auto i = 0u;       i < mode_inv && i < rankc; ++i) pic.at(i) = pia.at(i);
-	for(auto i = mode_inv; i < rankc;                 ++i) pic.at(i) = pia.at(i+1);
-
-	for(auto i = 0u; i < rankc; ++i)
-		if(pic.at(i) > mode)
-			--pic.at(i);
-	if(pic.size() == 1)
-		pic.push_back(2);
-
-	return pic;
-}
-*/
 
 
 

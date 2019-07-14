@@ -26,8 +26,8 @@
 template<class value_type, class size_type>
 inline void 
 ttv_init_recursive(
-	const unsigned r,
-	const unsigned q1,
+	const size_type r,
+	const size_type q1,
 	size_type j,
 	size_type& k,
 	std::vector<value_type> & a, 
@@ -47,7 +47,7 @@ ttv_init_recursive(
 
 template<class value_type, class size_type>
 inline void ttv_init(
-	unsigned const q,
+	size_type const q,
 	std::vector<value_type> & a, 
 	std::vector<size_type> const& na, 
 	std::vector<size_type> const& wa, 
@@ -56,11 +56,11 @@ inline void ttv_init(
 	assert(na.size() == wa .size());
 	assert(wa.size() == pia.size());
 	
-	const unsigned p  = na.size();	
+	const size_type p  = na.size();	
 	assert(p>=2);
 	assert(1<=q && q <= p);
 	
-	const unsigned q1 = tlib::detail::inverse_mode(pia.begin(), pia.end(), q );
+	const size_type q1 = tlib::detail::inverse_mode(pia.begin(), pia.end(), q );
 	assert(1<=q1 && q1 <= p);
 		
 	size_type k = 0ul;
@@ -73,8 +73,8 @@ inline void ttv_init(
 template<class value_type, class size_type, class function_type>
 inline void 
 ttv_check_recursive(
-	const unsigned r,
-	const unsigned q1,
+	const size_type r,
+	const size_type q1,
 	size_type j,	
 	std::vector<value_type> const& a, 
 	std::vector<size_type> const& na, 
@@ -82,33 +82,30 @@ ttv_check_recursive(
 	std::vector<size_type> const& pia,
 	function_type compute_element)
 {
-//	if(r==q1)
-//		ttv_check_recursive(r-1,q1,j, a, na, wa, pia, compute_element);
 	if(r>0)
 		for(auto i = 0ul; i < na[pia[r-1]-1]; ++i, j+=wa[pia[r-1]-1])
 			ttv_check_recursive(r-1,q1,j, a, na, wa, pia, compute_element);	
 	else	
-		//for(auto i = 0ul; i < na[pia[0]-1]; ++i, ++j)
 		EXPECT_FLOAT_EQ(a[j],compute_element(j+1));
 }
 
 
 
-template<class value_type, class size_type, class function_type>
+template<class value_type, class size_type, class execution_policy, class slicing_policy, class fusion_policy>
 inline void 
-ttv_check(		
-		unsigned const q, // mode   
-		std::vector<value_type> const& a,
-		std::vector<value_type> const& b,
-		std::vector<size_type> const& na, // shape tuple for a
-		std::vector<size_type> const& wa, // stride tuple for a
-		std::vector<size_type> const& pia, // layout tuple for a
-		function_type&& tensor_function) 
+ttv_check(
+	execution_policy ep, slicing_policy sp, fusion_policy fp,
+	size_type const q, // mode   
+	std::vector<value_type> const& a,
+	std::vector<value_type> const& b,
+	std::vector<size_type> const& na, // shape tuple for a
+	std::vector<size_type> const& wa, // stride tuple for a
+	std::vector<size_type> const& pia) // layout tuple for a
 {
 	assert(na.size() == wa .size());
 	assert(wa.size() == pia.size());
 	
-	const unsigned p  = na.size();	
+	const size_type p  = na.size();	
 	
 	assert(1u < p);
 	assert(1u <= q && q <= p);
@@ -125,18 +122,12 @@ ttv_check(
 	
 	auto c = std::vector(nnc,value_type{});
 	
-	tensor_function(q, p, 
-		a.data(), na.data(), wa.data(), pia.data(),
-		b.data(), nb.data(),
-		c.data(), nc.data(), wc.data(), pic.data());
+	tlib::tensor_times_vector(ep,sp,fp,  q,p,  a.data(), na.data(), wa.data(), pia.data(), b.data(), nb.data(), c.data(), nc.data(), wc.data(), pic.data());
 	
 	
 //	std::cout <<"c = [ "; std::copy(c.begin(), c.end(), std::ostream_iterator<value_type>(std::cout, " ")); std::cout <<"];" << std::endl;
 	
-	// auto compute_element = [nq](size_type i){return (i*nq*(i*nq+1ul))/2ul;};
-	
 	auto compute_element = [nq](size_type i){return (nq*nq*(2ul*i-1ul)+nq)/2ul;};
-	
 	
 	auto q1 = tlib::detail::inverse_mode(pia.begin(),pia.end(),q);	
 	assert(2u <= p);
@@ -144,14 +135,14 @@ ttv_check(
 	
 //	std::cout << "q=" << q << ", q1=" << q1 << std::endl;
 	
-	ttv_check_recursive( p-1, q1, 0ul, c, nc, wc, pic, compute_element) ;
+	ttv_check_recursive(p-1, q1, 0ul, c, nc, wc, pic, compute_element) ;
 	
 }
 
 
 
-template<class value_type, class size_type, class function_type, unsigned rank>
-inline void check_tensor_times_vector(const size_type init, const size_type steps, function_type tensor_function)
+template<class value_type, class size_type, class execution_policy, class slicing_policy, class fusion_policy, unsigned rank>
+inline void check_tensor_times_vector(const size_type init, const size_type steps)
 {
 
 	auto init_v  = std::vector<size_type>(rank,init );
@@ -159,12 +150,14 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 
 	auto shapes  = tlib::gtest::generate_shapes      <size_type,rank> (init_v,steps_v);
 	auto layouts = tlib::gtest::generate_permutations<size_type,rank> (); 
+	
+	auto ep = execution_policy();
+	auto sp = slicing_policy();
+	auto fp = fusion_policy();
 
 
 	for(auto const& na : shapes)
 	{
-//		if(rank != 4) continue;
-//		if(shape_in[0]!=4 || shape_in[1]!=16 || shape_in[2]!=8 || shape_in[3]!=2 ) continue;
 
 		assert(tlib::detail::is_valid_shape(na.begin(), na.end()));
 
@@ -175,14 +168,11 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 		{
 			assert(tlib::detail::is_valid_layout(pia.begin(), pia.end()));
 
-//			if(rank != 4) continue;
-//			if(layout_in[0]!=1 || layout_in[1]!=2 || layout_in[2]!=3 || layout_in[3]!=4 ) continue;
-
 			auto wa = tlib::detail::generate_strides (na ,pia );
 			
 			assert(tlib::detail::is_valid_strides(pia.begin(), pia.end(),wa.begin()));
 
-			for(auto q = 1u; q <= rank; ++q)
+			for(auto q = 1ul; q <= rank; ++q)
 			{
 				ttv_init(q,a,na,wa,pia);
 				
@@ -190,7 +180,7 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 				
 //				std::cout <<"a = [ "; std::copy(a.begin(), a.end(), std::ostream_iterator<value_type>(std::cout, " ")); std::cout <<"];" << std::endl;
 
-				ttv_check(q,a,b,na,wa,pia,tensor_function);
+				ttv_check(ep,sp,fp,  q,a,b,na,wa,pia);
 			}
 //			std::cout << std::endl;
 		}
@@ -198,189 +188,130 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 }
 
 
-TEST(TensorTimesVector, LargeBlock)
+TEST(TensorTimesVector, SequentialLargeSlicesNoLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::sequential_policy;
+	using slicing_policy   = tlib::slicing::large_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2u,3);
 }
 
 
-TEST(TensorTimesVector, LargeBlockParallel)
+TEST(TensorTimesVector, ParallelLargeSlicesNoLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block_parallel<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_policy;
+	using slicing_policy   = tlib::slicing::large_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
-TEST(TensorTimesVector, LargeBlockParallelBlas)
+TEST(TensorTimesVector, ParallelBlasLargeSlicesNoLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block_parallel_blas<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_blas_policy;
+	using slicing_policy   = tlib::slicing::large_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
-}
-
-/*
-TEST(TensorTimesVector, LargeBlockParallelBlas2)
-{
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block_parallel_blas_2<value_type>;
-	
-	using function_type = decltype(function);
-
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
-}
-*/
-
-
-TEST(TensorTimesVector, LargeBlockParallelBlas3)
-{
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block_parallel_blas_3<value_type>;
-	
-	using function_type = decltype(function);
-
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
-TEST(TensorTimesVector, LargeBlockParallelBlas4)
+TEST(TensorTimesVector, ParallelBlasLargeSlicesCompleteLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_large_block_parallel_blas_4<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_blas_policy;
+	using slicing_policy   = tlib::slicing::large_policy;
+	using fusion_policy    = tlib::loop_fusion::all_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
 
 
 
-
-TEST(TensorTimesVector, Block)
+TEST(TensorTimesVector, SequentialSmallSlicesNoLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_block<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::sequential_policy;
+	using slicing_policy   = tlib::slicing::small_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3u);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3u);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2u,3u);
+}
+
+TEST(TensorTimesVector, ParallelSmallSlicesNoLoopFusion)
+{
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_policy;
+	using slicing_policy   = tlib::slicing::small_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
+
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
-
-
-
-TEST(TensorTimesVector, SmallBlock)
+TEST(TensorTimesVector, ParallelBlasSmallSlicesNoLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_small_block<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_blas_policy;
+	using slicing_policy   = tlib::slicing::small_policy;
+	using fusion_policy    = tlib::loop_fusion::none_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
-}
-
-TEST(TensorTimesVector, SmallBlockParallel)
-{
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_small_block_parallel<value_type>;
-	
-	using function_type = decltype(function);
-
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
-TEST(TensorTimesVector, SmallBlockParallelBlas)
+TEST(TensorTimesVector, ParallelBlasSmallSlicesOuterLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_small_block_parallel_blas<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_blas_policy;
+	using slicing_policy   = tlib::slicing::small_policy;
+	using fusion_policy    = tlib::loop_fusion::outer_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
 
-TEST(TensorTimesVector, SmallBlockParallelBlas3)
+TEST(TensorTimesVector, ParallelBlasSmallSlicesCompleteLoopFusion)
 {
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_small_block_parallel_blas_3<value_type>;
-	
-	using function_type = decltype(function);
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = tlib::execution::parallel_blas_policy;
+	using slicing_policy   = tlib::slicing::small_policy;
+	using fusion_policy    = tlib::loop_fusion::all_policy;
 
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
-}
-
-
-TEST(TensorTimesVector, SmallBlockParallelBlas4)
-{
-	using value_type = double;
-	using size_type = std::size_t;
-	
-	auto function = tlib::tensor_times_vector_small_block_parallel_blas_4<value_type>;
-	
-	using function_type = decltype(function);
-
-	check_tensor_times_vector<value_type,size_type,function_type,2u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,3u>(2,3,function);
-	check_tensor_times_vector<value_type,size_type,function_type,4u>(2,3,function);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 

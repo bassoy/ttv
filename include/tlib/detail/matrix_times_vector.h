@@ -43,7 +43,7 @@ namespace tlib::detail {
  * \note performs this with blas library
  *
 */
-template<class value_t>
+template<class value_t, class size_t>
 static inline void gemv_row(
 		value_t const*const __restrict a,
 		value_t const*const __restrict b,
@@ -77,7 +77,7 @@ static inline void gemv_row(
  * c is a vector or fiber and should point to a contiguously stored memory region of length na_pia_1 or nn
  *
 */
-template<class value_t>
+template<class value_t, class size_t>
 inline void gemv_col(
 		value_t const*const __restrict a,
 		value_t const*const __restrict b,
@@ -101,7 +101,7 @@ inline void gemv_col(
 
 
 
-template<class value_t>
+template<class value_t, class size_t>
 void gemv_col_parallel(
 		value_t const*const __restrict a,
 		value_t const*const __restrict b,
@@ -157,7 +157,7 @@ void gemv_col_parallel(
  * \note performs this with blas library
  *
 */
-template<class value_t>
+template<class value_t, class size_t>
 inline void gemv_col_blas(
 		value_t const*const __restrict a,
 		value_t const*const __restrict b,
@@ -187,7 +187,7 @@ inline void gemv_col_blas(
  * \note performs this with blas library
  *
 */
-template<class value_t>
+template<class value_t, class size_t>
 inline void gemv_row_blas(
 		value_t const*const __restrict a,
 		value_t const*const __restrict b,
@@ -209,7 +209,7 @@ inline void gemv_row_blas(
 #endif
 }
 
-template<class value_t>
+template<class value_t, class size_t>
 inline void dot(
 	value_t const*const __restrict a,
 	value_t const*const __restrict b,
@@ -225,7 +225,7 @@ inline void dot(
 }
 
 
-template<class value_t>
+template<class value_t, class size_t>
 inline void dot_parallel(
 	value_t const*const __restrict a,
 	value_t const*const __restrict b,
@@ -249,85 +249,99 @@ inline auto compute_nfull(size_t const*const na, size_t p)
 
 
 // value_t         value type of the elements
-// optimization_t  std::tuple of optimization types
-template<class value_t, class optimization_t>
-struct MatrixTimesVector;
+// execution_t  std::tuple of optimization types
+//template<class value_t, class execution_t>
+//struct MatrixTimesVector;
+//template<class value_t>
+//struct MatrixTimesVector<value_t,sequential_tag>
 
 
-
-template<class value_t>
-struct MatrixTimesVector<value_t,std::tuple<>>
-{
-	static void run(
+template<class value_t, class size_t, class execution_policy>
+inline void mtv(
+			execution_policy,
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const b, size_t const*const /*nb*/,
+			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
+			);
+
+
+//template<class value_t, size_t>
+//struct MatrixTimesVector<value_t,size_t, sequential_tag>
+
+template<class value_t, class size_t>
+inline void mtv(
+			execution::sequential_policy,
+			size_t const m, size_t const p,
+			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
-	{
-		auto n = compute_nfull(na,p) / na[m-1];
-		
-		     if(is_case<1>(p,m,pia)) dot     (a,b,c,na[0]);
-		else if(is_case<2>(p,m,pia)) gemv_row(a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
-		else if(is_case<3>(p,m,pia)) gemv_col(a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
-		else if(is_case<4>(p,m,pia)) gemv_col(a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
-		else if(is_case<5>(p,m,pia)) gemv_row(a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
-		else if(is_case<6>(p,m,pia)) gemv_row(a,b,c,n,na[m-1],na[m-1]);
-		else if(is_case<7>(p,m,pia)) gemv_col(a,b,c,n,na[m-1],n);
-
-	}
-};
-
-
-template<class value_t>
-struct MatrixTimesVector<value_t,std::tuple<parallel>>
 {
-	static void run(
+	auto n = compute_nfull(na,p) / na[m-1];
+	
+	     if(is_case<1>(p,m,pia)) dot     (a,b,c,na[0]);
+	else if(is_case<2>(p,m,pia)) gemv_row(a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
+	else if(is_case<3>(p,m,pia)) gemv_col(a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
+	else if(is_case<4>(p,m,pia)) gemv_col(a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
+	else if(is_case<5>(p,m,pia)) gemv_row(a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
+	else if(is_case<6>(p,m,pia)) gemv_row(a,b,c,n,na[m-1],na[m-1]);
+	else if(is_case<7>(p,m,pia)) gemv_col(a,b,c,n,na[m-1],n);
+
+}
+
+
+
+//template<class value_t>
+//struct MatrixTimesVector<value_t,parallel_tag>
+template<class value_t, class size_t>
+inline void mtv(
+			execution::parallel_policy,
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
-	{
-		
-		auto n = compute_nfull(na,p) / na[m-1];
-		
-		     if(is_case<1>(p,m,pia)) dot_parallel     (a,b,c,na[0]);
-		else if(is_case<2>(p,m,pia)) gemv_row         (a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
-		else if(is_case<3>(p,m,pia)) gemv_col_parallel(a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
-		else if(is_case<4>(p,m,pia)) gemv_col_parallel(a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
-		else if(is_case<5>(p,m,pia)) gemv_row         (a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
-		else if(is_case<6>(p,m,pia)) gemv_row         (a,b,c,n,na[m-1],na[m-1]);
-		else if(is_case<7>(p,m,pia)) gemv_col_parallel(a,b,c,n,na[m-1],n);		
-		
-	}
-};
-
-
-
-template<class value_t>
-struct MatrixTimesVector<value_t,std::tuple<blas>>
 {
-	static void run(
+	
+	auto n = compute_nfull(na,p) / na[m-1];
+	
+	     if(is_case<1>(p,m,pia)) dot_parallel     (a,b,c,na[0]);
+	else if(is_case<2>(p,m,pia)) gemv_row         (a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
+	else if(is_case<3>(p,m,pia)) gemv_col_parallel(a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
+	else if(is_case<4>(p,m,pia)) gemv_col_parallel(a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
+	else if(is_case<5>(p,m,pia)) gemv_row         (a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
+	else if(is_case<6>(p,m,pia)) gemv_row         (a,b,c,n,na[m-1],na[m-1]);
+	else if(is_case<7>(p,m,pia)) gemv_col_parallel(a,b,c,n,na[m-1],n);		
+	
+}
+
+
+
+
+//template<class value_t>
+//struct MatrixTimesVector<value_t,blas_tag>
+template<class value_t, class size_t>
+inline void mtv(
+			execution::parallel_blas_policy,
 			size_t const m, size_t const p,
-			value_t const*const a, size_t const*const na, size_t const*const /*wa*/, size_t const*const pia,
+			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
 			)
-	{
+{
 
-		auto n = compute_nfull(na,p) / na[m-1];
-		
-		     if(is_case<1>(p,m,pia)) dot_parallel  (a,b,c,na[0]);
-		else if(is_case<2>(p,m,pia)) gemv_row_blas (a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
-		else if(is_case<3>(p,m,pia)) gemv_col_blas (a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
-		else if(is_case<4>(p,m,pia)) gemv_col_blas (a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
-		else if(is_case<5>(p,m,pia)) gemv_row_blas (a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
-		else if(is_case<6>(p,m,pia)) gemv_row_blas (a,b,c,n,na[m-1],na[m-1]);
-		else if(is_case<7>(p,m,pia)) gemv_col_blas (a,b,c,n,na[m-1],n);	
-		
-	}	
-};
+	auto n = compute_nfull(na,p) / na[m-1];
+	
+	     if(is_case<1>(p,m,pia)) dot_parallel  (a,b,c,na[0]);
+	else if(is_case<2>(p,m,pia)) gemv_row_blas (a,b,c,na[1],na[0],na[0] ); // first-order (column-major)
+	else if(is_case<3>(p,m,pia)) gemv_col_blas (a,b,c,na[0],na[1],na[0] ); // first-order (column-major)
+	else if(is_case<4>(p,m,pia)) gemv_col_blas (a,b,c,na[1],na[0],na[1] ); // last-order  (row-major)
+	else if(is_case<5>(p,m,pia)) gemv_row_blas (a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
+	else if(is_case<6>(p,m,pia)) gemv_row_blas (a,b,c,n,na[m-1],na[m-1]);
+	else if(is_case<7>(p,m,pia)) gemv_col_blas (a,b,c,n,na[m-1],n);	
+	
+}
 
 
 
