@@ -19,6 +19,7 @@
 #define TLIB_DETAIL_TENSOR_H
 
 #include <vector>
+#include <numeric>
 
 #include "layout.h"
 #include "shape.h"
@@ -40,7 +41,7 @@ public:
 	tensor(shape_t const& n, layout_t const& pi)
 		: _n (n)
 		, _pi(pi)
-		, _data(n.size())
+		, _data(std::accumulate(n.begin(),n.end(),1ul,std::multiplies<>()))
 	{
 		if(n.size() != pi.size()) 
 			throw std::runtime_error("Error in tlib::tensor: shape vector and layout vector must have the same length.");
@@ -59,6 +60,12 @@ public:
 	{
 		std::fill(this->data().begin(), this->data().end(), v);
 	}
+	
+	auto begin() const { return this->data().begin(); }
+	auto end  () const { return this->data().end  (); }
+	
+	decltype(auto) begin() { return this->data().begin(); }
+	decltype(auto) end  () { return this->data().end  (); }
 	
 	auto const& data   () const { return this->_data; }
 	auto      & data   ()       { return this->_data; }

@@ -20,6 +20,7 @@
 
 #include "detail/tensor_times_vector.h"
 #include "detail/tensor.h"
+#include "detail/tags.h"
 
 namespace tlib
 {
@@ -95,16 +96,21 @@ inline void tensor_times_vector(
 
 
 
-template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
-inline void tensor_times_vector(
-	size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
-	execution_policy ep = execution::blas, slicing_policy sp = slicing::small, fusion_policy fp = loop_fusion::all)  
+template<class value_t, class execution_policy, class slicing_policy, class fusion_policy>
+inline auto tensor_times_vector(
+	std::size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
+	execution_policy ep, slicing_policy sp, fusion_policy fp)  
 {
-	auto c =) tensor<value_t>
+	auto c_shape  = tlib::detail::generate_output_shape (a.shape() ,q);
+	auto c_layout = tlib::detail::generate_output_layout(a.layout(),q);
+	auto c        = tensor<value_t>( c_shape, c_layout  );
+
 	tensor_times_vector( ep, sp, fp, q, a.order(), 
-		a.data(), a.shape().data(), a.strides().data(), a.layout().data(),
-		b.data(), b.shape().data(),
-		c.data(), c.shape().data(), c.strides().data(), c.layout().data());
+		a.data().data(), a.shape().data(), a.strides().data(), a.layout().data(),
+		b.data().data(), b.shape().data(),
+		c.data().data(), c.shape().data(), c.strides().data(), c.layout().data());
+		
+	return c;
 }
 
 
