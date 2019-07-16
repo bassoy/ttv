@@ -55,7 +55,7 @@ int main()
 */
 }
 ```
-Compile with `g++ -I../include/ -std=c++17 -Ofast main.cpp -o main` and additionally `-DUSE_OPENBLAS` or `-DUSE_INTELBLAS`  for fast execution
+Compile with `g++ -I../include/ -std=c++17 -Ofast -fopenmp main.cpp -o main` and additionally `-DUSE_OPENBLAS` or `-DUSE_INTELBLAS`  for fast execution.
 
 # Citation
 

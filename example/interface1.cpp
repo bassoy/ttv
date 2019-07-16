@@ -1,6 +1,6 @@
 /*
 # include either -DUSE_OPENBLAS or -DUSE_INTELBLAS for fast execution
-g++ -I../include/ -std=c++17 -Ofast interface3.cpp -o interface3 && ./interface3
+g++ -I../include/ -std=c++17 -Ofast -fopenmp interface1.cpp -o interface1 && ./interface1
 */
 
 #include <tlib/ttv.h>
