@@ -42,7 +42,7 @@ int main()
   B =   { 1 1 1 } ;
 */
 
-  auto C1 = A *q B;
+  auto C1 = A (q)* B;
   
 /*
   C =  { 1+5+ 9 | 13+17+21
