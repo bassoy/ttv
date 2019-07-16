@@ -26,14 +26,10 @@ Implementation details and runtime behevior of the tensor-vector multiplication 
 
 int main()
 {
-  using value_t    = float;
-  using tensor_t   = tlib::tensor<value_t>;     // or std::array<value_t,N>
-  using iterator_t = std::ostream_iterator<value_t>;
+  const auto q = 2ul; // contraction mode
   
-  auto mode = 2ul;
-  
-  auto A = tensor_t( {4,3,2} ); 
-  auto B = tensor_t( {3,1}   );   
+  auto A = tlib::tensor<float>( {4,3,2} ); 
+  auto B = tlib::tensor<float>( {3,1}   );
   std::iota(A.begin(),A.end(),1);
   std::fill(B.begin(),B.end(),1);
 
@@ -46,7 +42,7 @@ int main()
   B =   { 1 1 1 } ;
 */
 
-  auto C1 = A(mode) * B;
+  auto C1 = A *q B;
   
 /*
   C =  { 1+5+ 9 | 13+17+21
