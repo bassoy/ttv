@@ -13,8 +13,9 @@ Simple examples of tensor-vector multiplications are the inner-product `c = a[i]
 The number of dimensions (order) `p` and the dimensions `n[r]` as well as a non-hierarchical storage format `pi` of the tensors `a` and `c` can be chosen at runtime.
 
 All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of high-performance `BLAS` such as OpenBLAS or Intel MKL without transposing the tensor.
-The library is an extension of the [boost/ublas](https://github.com/boostorg/ublas) tensor library containing the sequential version. 
-Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
+The library is an extension of the [boost/ublas](https://github.com/boostorg/ublas) tensor library containing the sequential version. Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
+
+Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **tuning parameters**.
 
 ## Example 
 ```cpp
@@ -43,7 +44,8 @@ int main()
   B =   { 1 1 1 } ;
 */
 
-  auto C1 = A (q)* B;
+  // computes mode-2 tensor-times-vector product with C(i,j) = A(i,k,j) * B(k)
+  auto C1 = A (q)* B; 
   
 /*
   C =  { 1+5+ 9 | 13+17+21
