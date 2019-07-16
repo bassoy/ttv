@@ -15,7 +15,7 @@ The number of dimensions (order) `p` and the dimensions `n[r]` as well as a non-
 All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of high-performance `BLAS` such as OpenBLAS or Intel MKL without transposing the tensor.
 The library is an extension of the [boost/ublas](https://github.com/boostorg/ublas) tensor library containing the sequential version. Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
 
-Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **tuning parameters**.
+Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **setting parameters**.
 
 ## Example 
 ```cpp
