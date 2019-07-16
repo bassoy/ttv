@@ -24,8 +24,34 @@
 #include "layout.h"
 #include "shape.h"
 
+
+
 namespace tlib
 {
+
+template<class value_t>
+class tensor;
+
+
+
+template<class _value_t>
+struct tensor_view
+{
+public:
+	using value_t = _value_t;
+	using tensor_t = tensor<value_t>;
+	tensor_view() = delete;
+	tensor_view(tensor_view const&) = delete;
+	tensor_view& operator=(tensor_view const&) = delete;
+	inline tensor_t const& get_tensor() const { return _tensor; }
+	inline std::size_t contraction_mode() const { return _q; }
+private:
+	friend tensor_view tensor_t::operator()(std::size_t q) const;
+	tensor_view(tensor_t const& tensor, std::size_t q) : _tensor(tensor), _q(q) {}
+	tensor_t const& _tensor;
+	std::size_t _q;
+};
+
 
 
 template<class value_t>
@@ -35,6 +61,7 @@ class tensor
 	using layout_t  = std::vector<std::size_t>;
 	using strides_t = std::vector<std::size_t>;	
 	using vector_t  = std::vector<value_t>;
+	using tensor_view_t = tensor_view<value_t>;
 public:
 	tensor() = delete;
 
@@ -61,6 +88,13 @@ public:
 		std::fill(this->data().begin(), this->data().end(), v);
 	}
 	
+	tensor_view_t operator()(std::size_t contraction_mode) const
+	{
+		if(1ul>contraction_mode || contraction_mode > this->order()) 
+			throw std::runtime_error("Error in tlib::tensor: specified contraction mode should be greater than one and equal to or less than the order.");
+		return tensor_view_t(*this,contraction_mode);
+	}
+	
 	auto begin() const { return this->data().begin(); }
 	auto end  () const { return this->data().end  (); }
 	
@@ -79,6 +113,8 @@ private:
 	layout_t _pi;
 	vector_t _data;
 };
+
+
 
 	
 }

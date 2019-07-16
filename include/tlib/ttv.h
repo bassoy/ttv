@@ -27,18 +27,16 @@ namespace tlib
 		
 
 /**
- * \brief Implements a tensor-times-vector-multiplication
+ * \brief Implements a mode-q tensor-times-vector-multiplication
  *
- * Performs a slice-times-vector operation in the most inner recursion level with subtensors of A and C
- *
- * It is a more sophisticated 2d-slice-times-vector implementation.
  *
  * @tparam value_t           type of the elements which is usually an floating point type, i.e. float, double or int
  * @tparam size_t size       type of the extents, strides and layout elements which is usually std::size_t
  * @tparam execution_policy  type of the execution policy which can be tlib::execution::seq, tlib::execution::par or tlib::execution::blas.
  * @tparam slicing_policy    type of the slicing policy which can be tlib::slicing::small or tlib::slicing::large
  * @tparam fusion_policy     type of the loop fusion policy which can be tlib::loop_fusion::none, tlib::loop_fusion::outer or tlib::loop_fusion::all
- * \param m  mode of the contraction with 1 <= m <= p
+ *
+ * \param q  mode of the contraction with 1 <= q <= p
  * \param p  rank of the array A with p > 0.
  * \param a  pointer to the array A.
  * \param na extents of the array A. Length of the tuple must be p.
@@ -52,7 +50,7 @@ namespace tlib
  * \param nc extents of the array C. Length of the tuple must be p-1.
  * \param wc strides of the array C. Length of the tuple must be p-1.
  * \param pic permutations of the indices of array C. Length of the tuple must be p-1. 
- 
+ *
 */
 template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
 inline void tensor_times_vector(
@@ -95,7 +93,10 @@ inline void tensor_times_vector(
 }
 
 
-
+/**
+ * \brief Implements a mode-q tensor-times-vector-multiplication
+ *
+ */
 template<class value_t, class execution_policy, class slicing_policy, class fusion_policy>
 inline auto tensor_times_vector(
 	std::size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
@@ -113,8 +114,16 @@ inline auto tensor_times_vector(
 	return c;
 }
 
+}
 
-
+/**
+ * \brief Implements a mode-q tensor-times-vector-multiplication
+ *
+ */
+template<class value_t>
+inline auto operator*(tlib::tensor_view<value_t> const& a,  tlib::tensor<value_t> const& b)
+{
+	return tensor_times_vector(a.contraction_mode(), a.get_tensor(),  b, tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all) ;
 }
 
 #endif // FHG_TENSOR_VECTOR_MULTIPLICATION_H
