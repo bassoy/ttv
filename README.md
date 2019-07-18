@@ -8,11 +8,15 @@ Tensor-Vector Multiplication Library (TTV)
 
 ## Summary
 **TTV** is C++ tensor-vector multiplication **header-only library**
-It provides free C++ functions for parallel computing the **mode-`q` tensor-times-vector product** `c[i,...,j] = a[i,...,k,...,j] * b[k]` where `q` is the index position of `k`.
-Simple examples of tensor-vector multiplications are the inner-product `c = a[i] * b[i]` with `q=1` and the matrix-vector multiplication `c[i] = a[i,j] * b[j]` with `q=2`.
-The number of dimensions (order) `p` and the dimensions `n[r]` as well as a non-hierarchical storage format `pi` of the tensors `a` and `c` can be chosen at runtime.
+It provides free C++ functions for parallel computing the **mode-`q` tensor-times-vector product** of the general form
 
-All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of high-performance `BLAS` such as OpenBLAS or Intel MKL without transposing the tensor.
+![hptt](https://github.com/bassoy/ttv/blob/master/misc/equation.eps)
+
+where `q` is the contraction mode, `A` and `C` are tensors of order `p` and `p-1`, respectively, `b` is a tensor of order `1`, thus a vector.
+Simple examples of tensor-vector multiplications are the inner-product `c = a[i] * b[i]` with `q=1` and the matrix-vector multiplication `c[i] = A[i,j] * b[j]` with `q=2`.
+The number of dimensions (order) `p` and the dimensions `n[r]` as well as a non-hierarchical storage format `pi` of the tensors `A` and `C` can be chosen at runtime.
+
+All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of `BLAS` such as OpenBLAS or Intel MKL without transposing the tensor.
 The library is an extension of the [boost/ublas](https://github.com/boostorg/ublas) tensor library containing the sequential version. Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
 
 Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **setting parameters**.
