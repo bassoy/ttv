@@ -10,7 +10,7 @@ Tensor-Vector Multiplication Library (TTV)
 **TTV** is C++ tensor-vector multiplication **header-only library**
 It provides free C++ functions for parallel computing the **mode-`q` tensor-times-vector product** of the general form
 
-![ttv](https://github.com/bassoy/ttv/blob/master/misc/equation.eps)
+![ttv](https://github.com/bassoy/ttv/blob/master/misc/equation.png)
 
 where `q` is the contraction mode, `A` and `C` are tensors of order `p` and `p-1`, respectively, `b` is a tensor of order `1`, thus a vector.
 Simple examples of tensor-vector multiplications are the inner-product `c = a[i] * b[i]` with `q=1` and the matrix-vector multiplication `c[i] = A[i,j] * b[j]` with `q=2`.
