@@ -26,7 +26,8 @@ Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for mo
 ### Flexibility
 * Contraction mode `q`, tensor order `p`, tensor extents `n` and tensor layout `pi` can be chosen at runtime
 * Supports any non-hierarchical storage format inlcuding the first-order and last-order storage layouts
-* Offers three interfaces for calling the tensor-times-vector multiplication
+* Offers two high-level and one C-like low-level interfaces for calling the tensor-times-vector multiplication
+* Implemented independent of a tensor data structure (can be used with `std::vector` and `std::array`)
 * Supports float, double, complex and double complex data types (and more if a BLAS library is not used)
 
 ### Performance
@@ -35,7 +36,9 @@ Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for mo
 * Performs in-place operations without transposing the tensor - no extra memory needed
 * For large tensors reaches peak matrix-times-vector performance
 
-
+### Requirements
+* Requires the tensor elements to be contiguously stored in memory.
+* Element types must be an arithmetic type suporting multiplication and addition operator
 
 ## Example 
 ```cpp
