@@ -23,14 +23,17 @@ Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for mo
 
 ## Key Features
 
+### Flexibility
 * Contraction mode `q`, tensor order `p`, tensor extents `n` and tensor layout `pi` can be chosen at runtime
 * Supports any non-hierarchical storage format inlcuding the first-order and last-order storage layouts
-* Performs in-place operations without transposing the tensor - no extra memory needed
-* For large tensors reaches peak matrix-times-vector performance
 * Offers three interfaces for calling the tensor-times-vector multiplication
-* Supports float, double, complex and double complex data types
+* Supports float, double, complex and double complex data types (and more if a BLAS library is not used)
+
+### Performance
 * Multi-threading support with OpenMP
 * Can be used with and without a BLAS implementation
+* Performs in-place operations without transposing the tensor - no extra memory needed
+* For large tensors reaches peak matrix-times-vector performance
 
 
 
