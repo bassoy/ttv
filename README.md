@@ -21,6 +21,25 @@ The library is an extension of the [boost/ublas](https://github.com/boostorg/ubl
 
 Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **setting parameters**.
 
+## Key Features
+
+### Flexibility
+* Contraction mode `q`, tensor order `p`, tensor extents `n` and tensor layout `pi` can be chosen at runtime
+* Supports any non-hierarchical storage format inlcuding the first-order and last-order storage layouts
+* Offers two high-level and one C-like low-level interfaces for calling the tensor-times-vector multiplication
+* Implemented independent of a tensor data structure (can be used with `std::vector` and `std::array`)
+* Supports float, double, complex and double complex data types (and more if a BLAS library is not used)
+
+### Performance
+* Multi-threading support with OpenMP
+* Can be used with and without a BLAS implementation
+* Performs in-place operations without transposing the tensor - no extra memory needed
+* For large tensors reaches peak matrix-times-vector performance
+
+### Requirements
+* Requires the tensor elements to be contiguously stored in memory.
+* Element types must be an arithmetic type suporting multiplication and addition operator
+
 ## Example 
 ```cpp
 /*main.cpp*/
