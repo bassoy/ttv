@@ -40,6 +40,30 @@ Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for mo
 * Requires the tensor elements to be contiguously stored in memory.
 * Element types must be an arithmetic type suporting multiplication and addition operator
 
+## Comparison
+
+### Symmetrically-Shaped Tensors
+<table>
+<tr>
+<td>
+<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> 
+</td>
+<td> 
+<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_single_precision.png" alt="Drawing" style="width: 250px;"/>
+</td>
+</tr>
+<tr>
+<td>
+<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_double_precision.png" alt="Drawing" style="width: 250px;"/> 
+</td>
+<td> 
+<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_double_precision.png" alt="Drawing" style="width: 250px;"/>
+</td>
+</tr>
+</table>
+
+
+
 ## Example 
 ```cpp
 /*main.cpp*/
