@@ -59,6 +59,9 @@ The tensor order of the asymmetrically- and symmetrically-shaped tensors have be
 The contraction mode `q` has also been varied from `1` to the tensor order.
 
 ### Symmetrically-Shaped Tensors
+
+**TTV** has been executed with parameters `tlib::execution::blas`, `tlib::slicing::large` and `tlib::loop_fusion::all`
+
 <table>
 <tr>
 <td><img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
@@ -71,6 +74,9 @@ The contraction mode `q` has also been varied from `1` to the tensor order.
 </table>
 
 ### Asymmetrically-Shaped Tensors
+
+**TTV** has been executed with parameters `tlib::execution::blas`, `tlib::slicing::small` and `tlib::loop_fusion::all`
+
 <table>
 <tr>
 <td><img src="https://github.com/bassoy/ttv/blob/master/misc/nonsymmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
