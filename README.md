@@ -40,25 +40,45 @@ Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for mo
 * Requires the tensor elements to be contiguously stored in memory.
 * Element types must be an arithmetic type suporting multiplication and addition operator
 
-## Comparison
+## Experiments
+
+The experiments were carried out on a Core i9-7900X Intel Xeon processor with 10 cores and 20 hardware threads running at 3.3 GHz.
+The source code has been compiled with GCC v7.3 using the highest optimization level `-Ofast` and `-march=native`, `-pthread` and `-fopenmp`. 
+Parallel execution has been accomplished using GCC ’s implementation of the OpenMP v4.5 specification. 
+We have used the `dot` and `gemv` implementation of the OpenBLAS library v0.2.20. 
+The benchmark results of each of the following functions are the average of 10 runs.
+
+The comparison includes three state-of-the-art libraries that implement three different approaches. 
+* [TCL](https://github.com/springer13/tcl) (v0.1.1 ) implements the TTGT approach. 
+* [TBLIS](https://github.com/devinamatthews/tblis) ( v1.0.0 ) implements the GETT approach.
+* [EIGEN](https://bitbucket.org/eigen/eigen/src/default/) unsupported tensor ( v3.3.90 ) is used by the Tensorflow framework.
+
+The experiments were carried out with asymmetrically-shaped and symmetrically-shaped tensors in order to provide a comprehensive test coverage where
+the tensor elements are stored according to the first-order storage format.
+The tensor order of the asymmetrically- and symmetrically-shaped tensors have been varied from `2` to `10` and `2` to `7`, respectively.
+The contraction mode `q` has also been varied from `1` to the tensor order.
 
 ### Symmetrically-Shaped Tensors
 <table>
 <tr>
-<td>
-<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> 
-</td>
-<td> 
-<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_single_precision.png" alt="Drawing" style="width: 250px;"/>
-</td>
+<td><img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+<td><img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
 </tr>
+<tr> 
+<td> <img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_double_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+<td> <img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_double_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+</tr>
+</table>
+
+### Asymmetrically-Shaped Tensors
+<table>
 <tr>
-<td>
-<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_throughput_double_precision.png" alt="Drawing" style="width: 250px;"/> 
-</td>
-<td> 
-<img src="https://github.com/bassoy/ttv/blob/master/misc/symmetric_speedup_double_precision.png" alt="Drawing" style="width: 250px;"/>
-</td>
+<td><img src="https://github.com/bassoy/ttv/blob/master/misc/nonsymmetric_throughput_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+<td><img src="https://github.com/bassoy/ttv/blob/master/misc/nonsymmetric_speedup_single_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+</tr>
+<tr> 
+<td> <img src="https://github.com/bassoy/ttv/blob/master/misc/nonsymmetric_throughput_double_precision.png" alt="Drawing" style="width: 250px;"/> </td>
+<td> <img src="https://github.com/bassoy/ttv/blob/master/misc/nonsymmetric_speedup_double_precision.png" alt="Drawing" style="width: 250px;"/> </td>
 </tr>
 </table>
 
