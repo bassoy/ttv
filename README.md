@@ -1,4 +1,4 @@
-Tensor-Vector Multiplication Library (TTV)
+High-Performance Tensor-Vector Multiplication Library (TTV)
 =====
 [![Language](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/bassoy/ttv/blob/master/LICENSE)
@@ -7,7 +7,7 @@ Tensor-Vector Multiplication Library (TTV)
 [![Build Status](https://travis-ci.org/bassoy/ttv.svg?branch=master)](https://travis-ci.org/bassoy/ttv)
 
 ## Summary
-**TTV** is C++ tensor-vector multiplication **header-only library**
+**TTV** is C++ high-performance tensor-vector multiplication **header-only library**
 It provides free C++ functions for parallel computing the **mode-`q` tensor-times-vector product** of the general form
 
 ![ttv](https://github.com/bassoy/ttv/blob/master/misc/equation.png)
