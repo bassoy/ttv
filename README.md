@@ -51,7 +51,7 @@ The benchmark results of each of the following functions are the average of 10 r
 The comparison includes three state-of-the-art libraries that implement three different approaches. 
 * [TCL](https://github.com/springer13/tcl) (v0.1.1 ) implements the TTGT approach. 
 * [TBLIS](https://github.com/devinamatthews/tblis) ( v1.0.0 ) implements the GETT approach.
-* [EIGEN](https://bitbucket.org/eigen/eigen/src/default/) unsupported tensor ( v3.3.90 ) is used by the Tensorflow framework.
+* [EIGEN](https://bitbucket.org/eigen/eigen/src/default/) ( v3.3.90 ) provides many tensor operations that are used by the Tensorflow framework.
 
 The experiments were carried out with asymmetrically-shaped and symmetrically-shaped tensors in order to provide a comprehensive test coverage where
 the tensor elements are stored according to the first-order storage format.
