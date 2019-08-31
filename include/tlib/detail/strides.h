@@ -101,31 +101,6 @@ inline bool is_valid_strides(InputIt1 layout_begin, InputIt1 layout_end, InputIt
 	//	[stride_begin]( auto l ) {return stride_begin[l-2] > stride_begin[l-1];} );
 }
 
-
-
-
-
-template<class size_t>
-inline auto index_transform(const size_t j_view, std::vector<size_t> const& strides_view, std::vector<size_t> const& strides_array, std::vector<size_t> const& layout)
-{
-	size_t p = strides_view.size();
-	size_t k = j_view;
-	size_t i = 0, i_ = 0;
-	size_t j = 0;
-	size_t q = 0;
-
-	for(int r = p-1; r >= 0; --r)
-	{
-		q  = layout[r]-1;
-		i_ = k/strides_view[q];
-		k -= strides_view[q]*i_;
-		i  = i_; // times t
-		j += strides_array[q]*i;
-	}
-	return j;
-}
-
-
 } // namespace tlib::detail
 
 #endif // TLIB_STRIDE_H

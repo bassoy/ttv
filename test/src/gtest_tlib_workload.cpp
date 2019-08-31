@@ -28,7 +28,7 @@
 #include <tlib/detail/strides.h>
 
 template<class size_type, size_type rank>
-inline auto check_index_space_division_small_block(size_type init, size_type steps)
+inline auto check_index_space_division(size_type init, size_type steps)
 {
 	static_assert(rank>2, "Static error in gtest_tensor_times_vector: rank must be greater 2.");
 
@@ -62,15 +62,15 @@ inline auto check_index_space_division_small_block(size_type init, size_type ste
 
 				assert(0 < m && m <= rank);
 
-				auto layouts = tlib::detail::divide_layout_small_block(l.data(), rank, m); // (l1,l2) <- divide(l) based on the contraction m.
+				auto layouts = tlib::detail::divide_layout(l.data(), rank, m); // (l1,l2) <- divide(l) based on the contraction m.
 				const auto l1 = layouts.first;
 				const auto l2 = layouts.second;
 
-				auto strides = tlib::detail::divide_small_block(w.data(), l.data(), rank, m); // (w1,w2) <- divide(w) based on permutation l and contraction m.
+				auto strides = tlib::detail::divide(w.data(), l.data(), rank, m); // (w1,w2) <- divide(w) based on permutation l and contraction m.
 				const auto w1 = strides.first;
 				const auto w2 = strides.second;
 
-				auto shapess = tlib::detail::divide_small_block(n.data(), l.data(), rank, m); // (n1,n2) <- divide(n) based on permutation l and contraction m.
+				auto shapess = tlib::detail::divide(n.data(), l.data(), rank, m); // (n1,n2) <- divide(n) based on permutation l and contraction m.
 				const auto n1 = shapess.first;
 				const auto n2 = shapess.second;
 
@@ -84,7 +84,7 @@ inline auto check_index_space_division_small_block(size_type init, size_type ste
 					auto i = tlib::detail::at_1( j, w, l ); // compute i
 					EXPECT_EQ ( tlib::detail::at( i, w ) , j );
 
-					auto iis = tlib::detail::divide_small_block(i.data(),l.data(), nn ,m); // (i1,i2) <- divide(i) based on permutation l and contraction m.
+					auto iis = tlib::detail::divide(i.data(),l.data(), nn ,m); // (i1,i2) <- divide(i) based on permutation l and contraction m.
 					auto i1 = iis.first;
 					auto i2 = iis.second;
 
@@ -129,10 +129,10 @@ inline auto check_index_space_division_small_block(size_type init, size_type ste
 }
 
 
-TEST(TensorTimesVector, CheckIndexDivisionSmallBlock)
+TEST(TensorTimesVector, CheckIndexDivision)
 {	
-	check_index_space_division_small_block<unsigned,3u>(2u,4u);
-	check_index_space_division_small_block<unsigned,4u>(2u,3u);
+	check_index_space_division<unsigned,3u>(2u,4u);
+	check_index_space_division<unsigned,4u>(2u,3u);
 //	check_index_space_division_small_block<unsigned,5u>(2u,2u);
 }
 

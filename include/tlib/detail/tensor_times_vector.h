@@ -30,6 +30,7 @@
 #include "tags.h"
 #include "cases.h"
 #include "strides.h"
+#include "index.h"
 
 
 #ifdef USE_OPENBLAS
@@ -408,24 +409,24 @@ inline void ttv(
 		auto const na_m = na[m-1];
 		auto const wa_m = wa[m-1];
 
-		auto const pia_pair = divide_layout_small_block(pia, p, m);
+		auto const pia_pair = divide_layout(pia, p, m);
 		auto const pia2 = pia_pair.second; // same for a and c
 		assert(pia_pair.first.size() == 2);
 		assert(pia2.size() > 0);
 
-		auto const wa_pair = divide_small_block(wa, pia, p, m);
+		auto const wa_pair = divide(wa, pia, p, m);
 		auto const wa2 = wa_pair.second; // NOT same for a and c
 		assert(wa_pair.first.size() == 2);
 		assert(wa2.size() > 0);
 
-		auto const wc_pair = divide_small_block(wc, pic, p-1);
+		auto const wc_pair = divide(wc, pic, p-1);
 		auto const wc2 = wc_pair.second; // NOT same for a and c
 		assert(wc_pair.first.size() == 1);
 		assert(wc2.size() > 0);
 
 		assert(wc2.size() == wa2.size());
 
-		auto const na_pair = divide_small_block(na, pia, p, m);
+		auto const na_pair = divide(na, pia, p, m);
 		auto const na2 = na_pair.second; // same for a and c
 		assert(na2.size() > 0);
 		
@@ -437,8 +438,8 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(dynamic) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
 		for(size_t k = 0; k < nn; ++k){
-			auto ka = index_transform(k, va2, wa2, pia2);
-			auto kc = index_transform(k, va2, wc2, pia2);
+			auto ka = at_at_1(k, va2, wa2, pia2);
+			auto kc = at_at_1(k, va2, wc2, pia2);
 			auto const*const ap = a + ka;
 			auto      *const cp = c + kc;
 			gemv_col_blas( ap,b,cp, na_pia_1, na_m, wa_m  );

@@ -43,7 +43,7 @@ int main()
   std::iota(A.begin(),A.end(),value_t{1});
   
   std::cout << "A = [ "; std::copy(A.begin(), A.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
-  std::cout << "A = [ "; std::copy(A.begin(), B.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
+  std::cout << "B = [ "; std::copy(B.begin(), B.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;
 
 /*
   a = 
