@@ -99,11 +99,12 @@ inline void check_mtv_init( std::vector<value_type> & a, std::vector<size_type> 
 
 TEST(MatrixTimesVector, Gemv)
 {
-	using value_type = float;
+	using value_type = double;
 	using size_type = std::size_t;
 	
 	auto start = std::vector<size_type>(2u,2u);
-	auto steps =std::vector<size_type>(2u,8u);
+	/* auto steps =std::vector<size_type>(2u,8u); */
+	auto steps =std::vector<size_type>(2u,10u);
 	
 	auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(start,steps);
 	
@@ -126,11 +127,12 @@ TEST(MatrixTimesVector, Gemv)
 
 TEST(MatrixTimesVector, GemvParallel)
 {
-	using value_type = float;
+	using value_type = double;
 	using size_type = std::size_t;
 	
 	const auto start = std::vector<size_type>(2u,2u);
-	const auto steps =std::vector<size_type>(2u,8u);
+	/* const auto steps =std::vector<size_type>(2u,8u); */
+	const auto steps =std::vector<size_type>(2u,10u);
 	
 	const auto shapes   = tlib::gtest::generate_shapes<size_type,2u>(start,steps);
 	
@@ -146,7 +148,7 @@ TEST(MatrixTimesVector, GemvParallel)
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row<value_type,size_type>,a,b,rm,na);
+		check_mtv_help(tlib::detail::gemv_row_parallel<value_type,size_type>,a,b,rm,na);
 	}
 }
 
