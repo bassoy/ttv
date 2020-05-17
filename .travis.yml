@@ -32,7 +32,7 @@ env:
 matrix:
   include:
     - os: linux
-      env: TOOLSET=gcc COMPILER=g++-7 CXXSTD=17    
+      env: TOOLSET=gcc COMPILER=g++-7 CXXSTD=17
     - os: linux
       env: TOOLSET=clang COMPILER=clang++-6.0 CXXSTD=17
       
