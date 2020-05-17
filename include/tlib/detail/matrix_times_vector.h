@@ -63,6 +63,26 @@ static inline void gemv_row(
 	}
 }	
 
+template<class value_t, class size_t>
+static inline void gemv_row_parallel(
+		value_t const*const __restrict a,
+		value_t const*const __restrict b,
+		value_t      *const __restrict c,
+		size_t const M, // nn
+		size_t const N, // na_m
+		size_t const lda) // na_m usually as
+{
+	#pragma omp parallel for firstprivate(a,b,c,N,lda,M)
+	for(auto i = 0ul; i < M; ++i){ // over row
+		auto const*const __restrict arow = a+i*lda;
+		auto sum = value_t{};
+		#pragma omp simd reduction (+:sum) // aligned (arow,b : 32)
+		for(auto k = 0ul; k < N; ++k){ // over column
+			sum += arow[k] * b[k];
+		}
+		c[i] = sum;
+	}
+}	
 /** \brief computes 2d-slice-times-vector
  *
  * a is a 2d-slice (M x N) i.e. (na_pia_1 x na_m or nn x na_m) where every COLUMN is CONTIGUOUSLY stored in memory.
