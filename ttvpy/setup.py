@@ -6,10 +6,10 @@ import sys
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
-#g++ -Wall -shared -std=c++17 wrapped_ttv.cpp -o ttvpy.so $(python3 -m pybind11 --includes) -I../include -fPIC -fopenmp -DUSE_OPENBLAS -lm -lopenblas
+#g++ -Wall -shared -std=c++17 src/wrapped_ttv.cpp -o ttvpy.so $(python3 -m pybind11 --includes) -I../include -fPIC -fopenmp -DUSE_OPENBLAS -lm -lopenblas
 # python3 setup.py clean --all && rm -rf __pycache__ ttvpy.cpython-38-x86_64-linux-gnu.so build/
 # python3 setup.py build_ext -i
-# sudo python3 -m pip install ttvpy
+# sudo pip install -e .
 # python3 -m unittest discover -v
 
 compile_args = ['-std=c++17','-O3','-fopenmp','-fPIC','-DUSE_OPENBLAS'] # '-Wall', 
@@ -33,14 +33,11 @@ ext_modules = [
 
 setup(
     name='ttvpy',
-    version='0.0.1',
+    version='0.0.2',
     author='Cem Bassoy',
     author_email='cem.bassoy@gmail.com',
     description='Python module for fast tensor-times-vector multiplication',
     ext_modules=ext_modules,
-    #package_dir={"": "bassoy"},
-    #packages=setuptools.find_packages(where="src"),
-    #packages=["bassoy"],
     python_requires=">=3.8",
     build_cmd = {"build_ext": build_ext},
     zip_safe=False,
