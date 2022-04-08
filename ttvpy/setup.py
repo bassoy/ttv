@@ -6,6 +6,18 @@ import sys
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
+
+class custom_build_ext(build_ext):
+    def build_extensions(self):
+        # Override the compiler executables. Importantly, this
+        # removes the "default" compiler flags that would
+        # otherwise get passed on to to the compiler, i.e.,
+        # distutils.sysconfig.get_var("CFLAGS").
+        self.compiler.set_executable("compiler_so", "g++")
+        self.compiler.set_executable("compiler_cxx", "g++")
+        self.compiler.set_executable("linker_so", "g++")
+        build_ext.build_extensions(self)
+
 #g++ -Wall -shared -std=c++17 src/wrapped_ttv.cpp -o ttvpy.so $(python3 -m pybind11 --includes) -I../include -fPIC -fopenmp -DUSE_OPENBLAS -lm -lopenblas
 # python3 setup.py clean --all && rm -rf __pycache__ ttvpy.cpython-38-x86_64-linux-gnu.so build/
 # python3 setup.py build_ext -i
@@ -39,7 +51,7 @@ setup(
     description='Python module for fast tensor-times-vector multiplication',
     ext_modules=ext_modules,
     python_requires=">=3.8",
-    build_cmd = {"build_ext": build_ext},
+    build_cmd = {"build_ext": custom_build_ext},
     zip_safe=False,
     install_requires=['numpy','pybind11'], 
 )

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <functional>
 
 // g++ -Wall -shared -std=c++17 wrapped_ttv.cpp -o ttvpy.so $(python3 -m pybind11 --includes) -I../include -fPIC -fopenmp -DUSE_OPENBLAS -lm -lopenblas
 
@@ -19,13 +20,11 @@ template<class T>
 py::array_t<T> 
 ttv(std::size_t const contraction_mode,
     py::array_t<T> const& a,
-    py::array_t<T> const& b,
-    std::size_t const version)
+    py::array_t<T> const& b)
 {
+
   auto const q = contraction_mode;
   
-  auto const v = version;
-
   auto const sizeofT = sizeof(T);
   
   auto const& ainfo = a.request(); // request a buffer descriptor from Python of type py::buffer_info
@@ -64,20 +63,16 @@ ttv(std::size_t const contraction_mode,
   auto* cptr        = static_cast<T*>(cinfo.ptr);    // extract data an shape of input array  
   auto nnc          = std::size_t(cinfo.size);
 
-  std::fill(cptr, cptr+nnc,T{});  
+  std::fill(cptr, cptr+nnc,T{});
 
-  switch(v){
-    case 1 : tlib::tensor_times_vector<T>(tlib::execution::seq,  tlib::slicing::small, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-    case 2 : tlib::tensor_times_vector<T>(tlib::execution::seq,  tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-    
-    case 3 : tlib::tensor_times_vector<T>(tlib::execution::par,  tlib::slicing::small, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-    case 4 : tlib::tensor_times_vector<T>(tlib::execution::par,  tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-
-    case 5 : tlib::tensor_times_vector<T>(tlib::execution::blas, tlib::slicing::small, tlib::loop_fusion::all,  q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-    case 6 : tlib::tensor_times_vector<T>(tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all,  q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-    
-    default: tlib::tensor_times_vector<T>(tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all,  q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data()); break;
-  }
+  
+#ifndef _OPENMP
+  tlib::tensor_times_vector<T>(tlib::execution::seq,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+#elif defined(USE_OPENBLAS) || defined(USE_MKL)
+  tlib::tensor_times_vector<T>(tlib::execution::blas,  tlib::slicing::large, tlib::loop_fusion::all , q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+#else 
+  tlib::tensor_times_vector<T>(tlib::execution::par,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+#endif
 
   return c;  
 }
@@ -88,21 +83,27 @@ ttv(std::size_t const contraction_mode,
 template<class T>
 py::array_t<T> 
 ttvs(std::size_t const non_contraction_mode,
-     py::array_t<T> const& a,
+     py::array_t<T> const& apy,
      py::list const& bpy,
-     std::size_t const version)
+     std::string morder
+    )
 {
+
+  if(morder!="optimal" && morder!="backward" && morder!="forward"){
+    throw std::invalid_argument("Error calling ttvpy::ttvs: multiplication order should be either 'optimal', 'backward' or 'forward'.");
+  }
+
   auto const q = non_contraction_mode;
  
-  auto const& ainfo = a.request(); // request a buffer descriptor from Python of type py::buffer_info
+  auto const& ainfo = apy.request(); // request a buffer descriptor from Python of type py::buffer_info
   auto const p = std::size_t(ainfo.ndim); //py::ssize_t
 
 	if(p==0)
-	  throw std::invalid_argument("Error calling ttvpy::nttv: input tensor order should be greater than zero.");
+	  throw std::invalid_argument("Error calling ttvpy::ttvs: input tensor order should be greater than zero.");
 	if(bpy.size() != p-1) 
-	  throw std::invalid_argument("Error calling ttvpy::nttv: number of input vectors is not equal to the tensor order - 1.");	
+	  throw std::invalid_argument("Error calling ttvpy::ttvs: number of input vectors is not equal to the tensor order - 1.");	
 	if(q==0 || q>p) 
-	  throw std::invalid_argument("Error calling ttvpy::nttv: contraction mode should be greater than zero or less than or equal to p.");  
+	  throw std::invalid_argument("Error calling ttvpy::ttvs: contraction mode should be greater than zero or less than or equal to p.");  
 
   auto na = std::vector<std::size_t>(ainfo.shape  .begin(), ainfo.shape  .end());
   
@@ -116,49 +117,65 @@ ttvs(std::size_t const non_contraction_mode,
   // check if all array orders are equal to 1 (need to be vectors)
   auto all_dim_1 = std::all_of( bs.begin(), bs.end(), [](auto const& bj){ return bj.request().ndim == 1u; } ); 
   if(!all_dim_1)
-    throw std::invalid_argument("Error calling ttvpy::nttv: some of the input vectors is not a vector.");  
+    throw std::invalid_argument("Error calling ttvpy::ttvs: some of the input vectors is not a vector.");  
     
   // copy vector dimensions to a separate container for convenience
   std::transform( bs.begin(), bs.end(), nb.begin(), [](auto const& b){ return b.request().shape[0]; } );
 
-  // 
+  // check if vector dimensions and corresponding tensor extents are the same
   bool na_equal_nb_q_1 = q==1 || std::equal ( nb.begin()  , nb.begin()+(q-1), na.begin()    );
-  bool na_equal_nb_q_2 = q==p || std::equal ( nb.begin()+q, nb.end  ()      , na.begin()+q+1);
-  
+  bool na_equal_nb_q_2 = q==p || std::equal ( nb.begin()+q, nb.end  ()      , na.begin()+q+1);  
   if(!na_equal_nb_q_1 || !na_equal_nb_q_2) 
-    throw std::invalid_argument("Error calling ttvpy::nttv: vector dimension is not compatible with the dimension of a tensor mode.");  
+    throw std::invalid_argument("Error calling ttvpy::ttvs: vector dimension is not compatible with the dimension of a tensor mode.");  
 
-  auto r = q==1u?2u:1u; // q=1->r=2 , q=2->r=1, q=3->r=1, q
-  auto c = ttv(r, a, bs[0], version); 
 
-/*
-  std::cout << "na=[ ";
-  for(auto i = 0u; i < na.size(); ++i)
-    std::cout << na[i] << " ";
-  std::cout << "];";
-
-  std::cout << "nb=[ ";
-  for(auto i = 0u; i < nb.size(); ++i)
-    std::cout << nb[i] << " ";
-  std::cout << "];";
- 
-  std::cout << "q=" << q << std::endl;  
-  std::cout << "p=" << p << std::endl;
-  std::cout << "r=" << r << std::endl;
-*/    
-
+  // B[0]...B[p-2]
+  // r = 1,...,q-1,q+1,...,p <- contraction dimensions [1-based]
   
+  
+  auto c = py::array_t<T>{};
+ 
 
-  if(q==1){
-    for(r=2; r < p; ++r)
-      c = ttv(2, c, bs[r-1], version);
+  // backward contractions
+  
+  if( morder == "backward" ){
+    auto r0 = q==p ? (p-1):p; // if(q==p) {r  = p-1,...    ,1} else {r  = p  ,...,q+1,q-1,...,1}
+    auto r1 = r0-1;           // if(q==p) {r1 =              } else {r1 = p-1,...,q+1          }
+    auto r2 = q==p?r1:(q-1);  // if(q==p) {r2 =     p-2,...,1} else {r2 =             q-1,...,1}
+
+    c  = ttv(r0, apy, bs[p-2]); // c.ndim = p-1
+    for(; r1 > q ; --r1) { assert(c.request().ndim==r1); c = ttv(r1, c, bs[r1-2]); }
+    for(; r2 > 0u; --r2) { assert(c.request().ndim==r2); c = ttv(r2, c, bs[r2-1]); }  
+    
+    
   }
-  else{
-    for(r=2; r < q; ++r)
-      c = ttv(1, c, bs[r-1], version);
-    for(r=q; r < p; ++r)
-      c = ttv(2, c, bs[r-1], version);
+  else if( morder == "forward" ){  
+    auto r0 = q==1u ? 2u:1u; // if(q==1) {r = 2,...,p} else {r = 1,...,q-1,q+1,...,p}
+    auto r1 = 2u;
+    auto r2 = q==1u ? 2u:q;
+    c  = ttv(r0, apy, bs[0]);   
+    
+    for(; r1 < q; ++r1) { assert(c.request().ndim==(p-r1)); c = ttv(1, c, bs[r1-1]); }
+    for(; r2 < p; ++r2) { assert(c.request().ndim==(p-r2)); c = ttv(2, c, bs[r2-1]); }
   }
+  else if ( morder == "optimal" ) {  
+    throw std::invalid_argument("Error calling ttvpy::ttvs: optimal multiplication order of ttvs not yet implemented.");    
+  }
+  else {
+    throw std::invalid_argument("Error calling ttvpy::ttvs: wrong option for multiplication order.");  
+  }
+  
+  
+/*  
+  // forward contractions 
+  auto r0 = q==1u ? 2u:1u; // if(q==1) {r = 2,...,p} else {r = 1,...,q-1,q+1,...,p}
+  auto r1 = 2u;
+  auto r2 = q==1u ? 2u:q;
+  auto c  = ttv(r0, a, bs[0], version);   
+  
+  for(; r1 < q; ++r1) { assert(c.request().ndim==(p-r1)); c = tlib_ttv(1, c, bs[r1-1]); }
+  for(; r2 < p; ++r2) { assert(c.request().ndim==(p-r2)); c = tlib_ttv(2, c, bs[r2-1]); }
+*/
 
   return c;
   
@@ -169,6 +186,6 @@ ttvs(std::size_t const non_contraction_mode,
 PYBIND11_MODULE(ttvpy, m)
 {
   m.doc() = "python plugin ttvpy for fast tensor-vector product(s)";
-  m.def("ttv",  &ttv<double> , "computes the tensor-vector product for the q-th mode", py::return_value_policy::move, py::arg("q"), py::arg("a"), py::arg("b"), py::arg("v")=6);
-  m.def("ttvs", &ttvs<double>, "computes multiple tensor-vector products except the q-th mode", py::return_value_policy::move, py::arg("q"), py::arg("a"), py::arg("bs"), py::arg("v")=6);
+  m.def("ttv",  &ttv<double> , "computes the tensor-vector product for the q-th mode",          py::return_value_policy::move, py::arg("q"), py::arg("A"), py::arg("b"));  
+  m.def("ttvs", &ttvs<double>, "computes multiple tensor-vector products except the q-th mode", py::return_value_policy::move, py::arg("q"), py::arg("A"), py::arg("bs"), py::arg("order")="optimal");
 }

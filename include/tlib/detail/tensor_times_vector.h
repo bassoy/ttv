@@ -393,7 +393,7 @@ inline void ttv(
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
-		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+		//auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 
 		set_blas_threads(1);
 
@@ -401,7 +401,7 @@ inline void ttv(
 		assert(p>2);
 
 		assert(pia[0]!=pia[p-1] );
-		assert(inv_pia_m != p);
+		//assert(inv_pia_m != p);
 		assert(m != pia[p-1]);
 
 		auto const na_pia_1 = na[pia[0]-1];
