@@ -32,23 +32,25 @@ python3 -m unittest discover -v
 
 ### q-mode Tensor-Vector Product
 ```python
-C = ttv(q, A, b, version=6)
+C = ttv(q, A, b)
 ```
 * `q` is the contraction mode with `1<=q<=A.ndim`
 * `A` is an input `numpy.ndarray` with typically `A.ndim>=2`
 * `b` is an input `numpy.ndarray` with `b.ndim=1` and `b.shape[0]=A.shape[q-1]`
 * `C` is the output `numpy.ndarray` with `A.ndim-1`
-* `version` corresponds to the optimization level: `6` highest (OpenBLAS or MKL with OpenMP) and `1` lowest (sequential). default value is `6`
 
 ### {1,...,q-1,q+1,...p}-mode Tensor-Vector Products
 ```python
-c = ttvs(q, A, B, version=6)
+c = ttvs(q, A, B, order)
 ```
 * `q` is the non-contraction mode with `1<=q<=A.ndim`. Every other mode of `A` is contracted with all vectors in `B`
 * `A` is an input `numpy.ndarray` with typically `A.ndim>=2`
 * `B` is an input list of `numpy.ndarray`s with `B[r].ndim=1` for `1<=r<p` and `B[r].shape[0]=A.shape[r]` for `1<=r<q` and `B[r].shape[0]=A.shape[r+1]` for `q<=r<p`
 * `c` is the output `numpy.ndarray` with `c.ndim=1` and `c.shape[0]=A.shape[q-1]`
-* `version` corresponds to the optimization level: `6` highest (OpenBLAS or MKL with OpenMP) and `1` lowest (sequential). default value is `6`
+* `order` corresponds to the multiplication order of the vectors (`optimal` is the default value) : 
+  * `forward` multiplies vectors according to `B[1]`,...,`B[p-1]`
+  * `backward` multiplies vectors according to `B[p-1]`,...,`B[1]`
+  * `optimal` multiplies vectors according to their dimensionality starting with `B[r]` with `B[r].shape >= B[q].shape` for all `1 <= q < p`.
 
 
 ## Python Example
