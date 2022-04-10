@@ -35,7 +35,7 @@ class TestqTTV(unittest.TestCase):
     D  = np.einsum("ijkl,j->ikl", A, B[0])
     D  = np.einsum("ikl,k->il"  , D, B[1])
     D  = np.einsum("il,l->i"    , D, B[2])
-    for order in ["forward", "backward"] :
+    for order in ["forward", "backward", "optimal"] :
       C = tp.ttvs(1, A, B, order)
       self.assertTrue(np.all(C==D))    
  
@@ -45,7 +45,7 @@ class TestqTTV(unittest.TestCase):
     D  = np.einsum("ijkl,i->jkl", A, B[0])
     D  = np.einsum("jkl,k->jl"  , D, B[1])
     D  = np.einsum("jl,l->j"    , D, B[2])
-    for order in ["forward", "backward"] :
+    for order in ["forward", "backward", "optimal"] :
       C = tp.ttvs(2, A, B, order)
       self.assertTrue(np.all(C==D))  
 
@@ -55,7 +55,7 @@ class TestqTTV(unittest.TestCase):
     D  = np.einsum("ijkl,i->jkl", A, B[0])
     D  = np.einsum("jkl,j->kl"  , D, B[1])
     D  = np.einsum("kl,l->k"    , D, B[2])
-    for order in ["forward", "backward"] :
+    for order in ["forward", "backward", "optimal"] :
       C = tp.ttvs(3, A, B, order)
       self.assertTrue(np.all(C==D))  
 
@@ -66,7 +66,7 @@ class TestqTTV(unittest.TestCase):
     D  = np.einsum("ijkl,i->jkl", A, B[0])
     D  = np.einsum("jkl,j->kl"  , D, B[1])
     D  = np.einsum("kl,k->l"    , D, B[2])
-    for order in ["forward", "backward"] :
+    for order in ["forward", "backward", "optimal"] :
       C = tp.ttvs(4, A, B, order)
       self.assertTrue(np.all(C==D))     
     

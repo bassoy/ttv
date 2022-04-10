@@ -153,29 +153,47 @@ ttvs(std::size_t const non_contraction_mode,
     auto r0 = q==1u ? 2u:1u; // if(q==1) {r = 2,...,p} else {r = 1,...,q-1,q+1,...,p}
     auto r1 = 2u;
     auto r2 = q==1u ? 2u:q;
-    c  = ttv(r0, apy, bs[0]);   
+    c  = ttv(r0, apy, bs.at(0));   
     
-    for(; r1 < q; ++r1) { assert(c.request().ndim==(p-r1)); c = ttv(1, c, bs[r1-1]); }
-    for(; r2 < p; ++r2) { assert(c.request().ndim==(p-r2)); c = ttv(2, c, bs[r2-1]); }
+    for(; r1 < q; ++r1) { assert(c.request().ndim==(p-r1)); c = ttv(1, c, bs.at(r1-1)); }
+    for(; r2 < p; ++r2) { assert(c.request().ndim==(p-r2)); c = ttv(2, c, bs.at(r2-1)); }
   }
-  else if ( morder == "optimal" ) {  
-    throw std::invalid_argument("Error calling ttvpy::ttvs: optimal multiplication order of ttvs not yet implemented.");    
+  else /*if ( morder == "optimal" )*/ {  
+    
+    // copy references of all vectors and their contraction dimension.    
+    auto bpairs = std::vector<std::pair<py::array_t<T>*,unsigned>>(p-1);   
+    for(auto r = 1u; r < q; ++r) /* r = 1...q-1*/
+      bpairs.at(r-1) = std::make_pair(std::addressof(bs.at(r-1)),r);     
+    for(auto r = q+1; r <= p; ++r) /*r = q+1...p*/
+      bpairs.at(r-2) = std::make_pair(std::addressof(bs.at(r-2)),r);
+    
+    // sort (ascending)  all vector references according to their dimension
+    auto dim_is_larger = [](auto const& lhs, auto const& rhs){ return lhs.first->shape(0) < rhs.first->shape(0);};
+    std::sort(bpairs.begin(), bpairs.end(), dim_is_larger);
+    
+    // check if vectors are well sorted.
+    auto dim_is_larger_equal = [](auto const& lhs, auto const& rhs){ return lhs.first->shape(0) <= rhs.first->shape(0);};
+    if(!std::is_sorted(bpairs.begin(), bpairs.end(), dim_is_larger_equal))
+      throw std::invalid_argument("Error calling ttvpy::ttvs: input vectors could not be sorted.");  
+      
+    // update contraction dimension for the remaining vectors after contraction
+    auto update = [](auto& bpairs, auto const& ib){
+      assert(ib != bpairs.rend());
+      auto const r = ib->second;
+      auto decrease_contraction = [r](auto &bpair){ if(bpair.second>r) --bpair.second; }; 
+      std::for_each(ib, bpairs.rend(), decrease_contraction);   
+    };
+    
+    auto ib = bpairs.rbegin();
+    c = ttv(ib->second, apy, *(ib->first));  
+    update(bpairs,ib);
+    
+    for(++ib; ib != bpairs.rend(); ++ib){
+      c = ttv(ib->second, c, *(ib->first));
+      update(bpairs,ib);
+    } 
+
   }
-  else {
-    throw std::invalid_argument("Error calling ttvpy::ttvs: wrong option for multiplication order.");  
-  }
-  
-  
-/*  
-  // forward contractions 
-  auto r0 = q==1u ? 2u:1u; // if(q==1) {r = 2,...,p} else {r = 1,...,q-1,q+1,...,p}
-  auto r1 = 2u;
-  auto r2 = q==1u ? 2u:q;
-  auto c  = ttv(r0, a, bs[0], version);   
-  
-  for(; r1 < q; ++r1) { assert(c.request().ndim==(p-r1)); c = tlib_ttv(1, c, bs[r1-1]); }
-  for(; r2 < p; ++r2) { assert(c.request().ndim==(p-r2)); c = tlib_ttv(2, c, bs[r2-1]); }
-*/
 
   return c;
   
