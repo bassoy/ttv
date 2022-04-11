@@ -168,16 +168,14 @@ ttvs(std::size_t const non_contraction_mode,
       bpairs.at(r-2) = std::make_pair(std::addressof(bs.at(r-2)),r);
     
     // sort (ascending)  all vector references according to their dimension
-    auto dim_is_larger = [](auto const& lhs, auto const& rhs){ return lhs.first->shape(0) < rhs.first->shape(0);};
-    std::sort(bpairs.begin(), bpairs.end(), dim_is_larger);
+    auto rhs_dim_is_larger = [](auto const& lhs, auto const& rhs){ return lhs.first->shape(0) < rhs.first->shape(0);};
+    std::sort(bpairs.begin(), bpairs.end(), rhs_dim_is_larger);
     
     // check if vectors are well sorted.
-    auto dim_is_larger_equal = [](auto const& lhs, auto const& rhs){ return lhs.first->shape(0) <= rhs.first->shape(0);};
-    if(!std::is_sorted(bpairs.begin(), bpairs.end(), dim_is_larger_equal))
-      throw std::invalid_argument("Error calling ttvpy::ttvs: input vectors could not be sorted.");  
-      
-    // update contraction dimension for the remaining vectors after contraction
-    auto update = [](auto& bpairs, auto const& ib){
+    assert(std::is_sorted(bpairs.begin(), bpairs.end(), rhs_dim_is_larger));
+          
+    // update contraction modes for the remaining vectors after contraction
+    auto update_contraction_modes = [&bpairs](auto const& ib){
       assert(ib != bpairs.rend());
       auto const r = ib->second;
       auto decrease_contraction = [r](auto &bpair){ if(bpair.second>r) --bpair.second; }; 
@@ -186,11 +184,11 @@ ttvs(std::size_t const non_contraction_mode,
     
     auto ib = bpairs.rbegin();
     c = ttv(ib->second, apy, *(ib->first));  
-    update(bpairs,ib);
+    update_contraction_modes(ib);
     
     for(++ib; ib != bpairs.rend(); ++ib){
       c = ttv(ib->second, c, *(ib->first));
-      update(bpairs,ib);
+      update_contraction_modes(ib);
     } 
 
   }

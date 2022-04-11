@@ -37,7 +37,16 @@ class TestqTTV(unittest.TestCase):
     D  = np.einsum("il,l->i"    , D, B[2])
     for order in ["forward", "backward", "optimal"] :
       C = tp.ttvs(1, A, B, order)
-      self.assertTrue(np.all(C==D))    
+      self.assertTrue(np.all(C==D))
+      
+    A  = np.arange(5*5*5*5, dtype=np.float64).reshape(5, 5, 5, 5)
+    B = [np.arange(5, dtype=np.float64), np.arange(5, dtype=np.float64), np.arange(5, dtype=np.float64)]
+    D  = np.einsum("ijkl,j->ikl", A, B[0])
+    D  = np.einsum("ikl,k->il"  , D, B[1])
+    D  = np.einsum("il,l->i"    , D, B[2])
+    for order in ["forward", "backward", "optimal"] :
+      C = tp.ttvs(1, A, B, order)
+      self.assertTrue(np.all(C==D))        
  
   def test_ttvs_mode2(self):
     A  = np.arange(3*2*4*5, dtype=np.float64).reshape(3, 2, 4, 5)
