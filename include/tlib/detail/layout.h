@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_LAYOUT_H
-#define TLIB_DETAIL_LAYOUT_H
+#pragma once
 
 #include <algorithm>
 #include <iterator>
@@ -24,7 +23,7 @@
 
 
 
-namespace tlib::detail
+namespace tlib::ttv::detail
 {
 
 template<class InputIt>
@@ -209,7 +208,4 @@ inline auto generate_output_layout(std::array<SizeType,N> const& input_layout, M
 
 
 
-} // namespace tlib::detail
-
-
-#endif // TLIB_LAYOUT_H
+} // namespace tlib::ttv::detail

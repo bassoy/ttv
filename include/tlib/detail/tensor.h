@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_TENSOR_H
-#define TLIB_DETAIL_TENSOR_H
+#pragma once
 
 #include <vector>
 #include <numeric>
@@ -26,7 +25,7 @@
 
 
 
-namespace tlib
+namespace tlib::ttv
 {
 
 template<class value_t>
@@ -72,9 +71,9 @@ public:
 	{
 		if(n.size() != pi.size()) 
 			throw std::runtime_error("Error in tlib::tensor: shape vector and layout vector must have the same length.");
-		if(!detail::is_valid_shape(n.begin(),n.end())) 
+        if(!detail::is_valid_shape(n.begin(),n.end()))
 			throw std::runtime_error("Error in tlib::tensor: shape vector of tensor is not valid.");
-		if(!detail::is_valid_layout(pi.begin(),pi.end())) 
+        if(!detail::is_valid_layout(pi.begin(),pi.end()))
 			throw std::runtime_error("Error in tlib::tensor: layout vector of tensor is not valid.");
 	}
 	
@@ -105,7 +104,7 @@ public:
 	auto      & data   ()       { return this->_data; }
 	auto const& shape  () const { return this->_n; };
 	auto const& layout () const { return this->_pi; };
-	auto        strides() const { return detail::generate_strides(this->shape(),this->layout()); };
+    auto        strides() const { return detail::generate_strides(this->shape(),this->layout()); };
 	auto        order  () const { return this->shape().size(); };
 	
 private:
@@ -117,9 +116,5 @@ private:
 
 
 	
-}
+} // namespace tlib::ttv
 
-
-
-
-#endif // TLIB_DETAIL_TENSOR_H

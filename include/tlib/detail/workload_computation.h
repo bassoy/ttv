@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_WLC_H
-#define TLIB_DETAIL_WLC_H
+#pragma once
 
 
 #include <stdexcept>
@@ -25,7 +24,7 @@
 #include <vector>
 
 
-namespace tlib::detail
+namespace tlib::ttv::detail
 {
 
 
@@ -124,6 +123,4 @@ auto divide(
 	return std::make_pair(x,y);
 }
 
-} // namespace tlib::detail
-
-#endif // TLIB_WLC_H
+} // namespace tlib::ttv::detail

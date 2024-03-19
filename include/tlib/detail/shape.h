@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_SHAPE_H
-#define TLIB_DETAIL_SHAPE_H
+#pragma once
 
 #include <algorithm>
 #include <iterator>
@@ -25,7 +24,7 @@
 #include <cstddef>
 
 
-namespace tlib::detail
+namespace tlib::ttv::detail
 {
 
 template<class InputIt>
@@ -162,6 +161,4 @@ inline auto generate_output_shape(std::array<SizeType,N> const& input_shape, Mod
 
 
 
-} // namespace tlib::detail
-
-#endif // TLIB_DETAIL_SHAPE_H
+} // namespace tlib::ttv::detail

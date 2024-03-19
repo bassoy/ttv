@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_TTV_H
-#define TLIB_DETAIL_TTV_H
+#pragma once
 
 #include <cstddef>
 #include <stdexcept>
@@ -44,7 +43,7 @@
 
 
 
-namespace tlib::detail{
+namespace tlib::ttv::detail{
 
 
 template<class size_t>
@@ -58,9 +57,9 @@ inline void set_blas_threads(size_t num)
 }
 
 template<class size_t>
-inline size_t compute_inverse_pia_m(size_t const*const pia, size_t const*const pic,  size_t const p, size_t const m)
+inline unsigned compute_inverse_pia_m(size_t const*const pia, size_t const*const pic,  unsigned const p, unsigned const m)
 {
-	size_t k = 0;
+    unsigned k = 0u;
 	for(; k<p; ++k)
 		if(pia[k] == m)
 			break;
@@ -82,11 +81,11 @@ inline size_t compute_inverse_pia_m(size_t const*const pia, size_t const*const p
 
 
 template<class size_t>
-inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, size_t invpia_m)
+inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, unsigned invpia_m)
 {
-	assert(invpia_m>0);
-	size_t nn = 1;
-	for(size_t r = 0; r<(invpia_m-1); ++r) nn *= na[pia[r]-1];
+    assert(invpia_m>0u);
+    size_t nn = 1ul;
+    for(auto r = 0u; r<(invpia_m-1); ++r) nn *= na[pia[r]-1];
 	return nn;
 }
 
@@ -98,12 +97,12 @@ inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, size_
 template<class value_t, class size_t, class gemv_t>
 inline void multiple_gemv_over_small_tensor_slices (
 		gemv_t && gemv,
-		size_t const r, // starts with p
-		size_t const q, // starts with p-1
+        unsigned const r, // starts with p
+        unsigned const q, // starts with p-1
 		size_t const na_pia_1,
 		size_t const na_m,
 		size_t const wa_m,
-		size_t const inv_pia_m, // one-based.
+        unsigned const inv_pia_m, // one-based.
 		value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 		value_t const*const __restrict b,
 		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -115,7 +114,7 @@ inline void multiple_gemv_over_small_tensor_slices (
 			multiple_gemv_over_small_tensor_slices(gemv, r-1,q, na_pia_1,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
 		}
 		else{ //  inv_pia_m < r  --- m < pia[r]
-			assert(q > 0);
+            assert(q > 0u);
 			for(unsigned i = 0; i < na[pia[r-1]-1]; ++i) // , a+=wa[pia[r-1]-1], c+=wc[pic[q-1]-1]
 				multiple_gemv_over_small_tensor_slices(gemv,r-1,q-1, na_pia_1,na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
 		}
@@ -136,25 +135,25 @@ inline void multiple_gemv_over_small_tensor_slices (
 template<class value_t, class size_t, class gemv_t>
 inline void multiple_gemv_over_large_tensor_slices (
 		gemv_t && gemv, // should be gemv_col type
-		size_t const r, // starts with p-1
-		size_t const q, // starts with p-1
+        unsigned const r, // starts with p-1
+        unsigned const q, // starts with p-1
 		size_t const nn, // number of column elements of the matrix
 		size_t const na_m, // number of row elements of the matrix
 		size_t const wa_m,
-		size_t const inv_pia_m, // one-based.
+        unsigned const inv_pia_m, // one-based.
 		value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 		value_t const*const __restrict b,
 		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
-	assert(nn > 1);
-	assert(inv_pia_m != 1);
+    assert(nn > 1ul);
+    assert(inv_pia_m != 1u);
 	if(r>0){
 		if (inv_pia_m >= r) {
 			multiple_gemv_over_large_tensor_slices  (gemv,r-1,q-1,nn,  na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
 		}
 		else if (inv_pia_m < r){
-			assert(q > 0);
+            assert(q > 0u);
 			for(size_t i = 0; i < na[pia[r-1]-1]; ++i)
 				multiple_gemv_over_large_tensor_slices (gemv,r-1,q-1,nn,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
 		}
@@ -183,7 +182,7 @@ inline void multiple_gemv_over_large_tensor_slices (
 template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
 inline void ttv(
 	execution_policy, slicing_policy, fusion_policy,
-	size_t const m, size_t const p,
+    unsigned const m, unsigned const p,
 	value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 	value_t const*const b, size_t const*const nb,
 	value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -198,7 +197,7 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::sequential_policy, slicing::small_policy, loop_fusion::none_policy,
-			size_t const m, size_t const p,
+            unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -225,7 +224,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_policy, slicing::small_policy, loop_fusion::none_policy,		
-			size_t const m, size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -274,8 +274,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::none_policy,	
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -323,8 +323,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::outer_policy,	
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -379,8 +379,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::all_policy,	
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -472,8 +472,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::sequential_policy, slicing::large_policy, loop_fusion::none_policy,
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -509,8 +509,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_policy, slicing::large_policy, loop_fusion::none_policy,	
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -561,8 +561,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_blas_policy, slicing::large_policy, loop_fusion::none_policy,
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -613,8 +613,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution::parallel_blas_policy, slicing::large_policy, loop_fusion::all_policy,
-			size_t const m,
-			size_t const p,
+            unsigned const m,
+            unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -655,8 +655,5 @@ inline void ttv(
 	}
 }
 
-} // namespace tlib::detail
+} // namespace tlib::ttv::detail
 
-
-
-#endif // TLIB_DETAIL_TTV_H

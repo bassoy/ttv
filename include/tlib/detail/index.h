@@ -15,10 +15,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_INDEX_H
-#define TLIB_DETAIL_INDEX_H
+#pragma once
 
-namespace tlib::detail
+namespace tlib::ttv::detail
 {
 
 
@@ -127,6 +126,4 @@ constexpr auto at_at_1(size_type const j_view, container_type const& w_view, con
 
 
 
-} // namespace detail
-
-#endif// TLIB_DETAIL_INDEX_H
+} // namespace tlib::ttv::detail

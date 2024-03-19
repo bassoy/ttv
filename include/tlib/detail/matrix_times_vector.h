@@ -1,5 +1,4 @@
-#ifndef TLIB_DETAIL_MV_H
-#define TLIB_DETAIL_MV_H
+#pragma once
 
 #include <cstddef>
 #include <stdexcept>
@@ -23,7 +22,7 @@
 #endif
 
 
-namespace tlib::detail {
+namespace tlib::ttv::detail {
 
 
 /** \brief computes 2d-slice-times-vector
@@ -262,7 +261,7 @@ inline void dot_parallel(
 
 
 template<class size_t>
-inline auto compute_nfull(size_t const*const na, size_t p)
+inline auto compute_nfull(size_t const*const na, unsigned p)
 {
 	return std::accumulate( na, na+p, 1ul, std::multiplies<>()  );
 }
@@ -279,7 +278,7 @@ inline auto compute_nfull(size_t const*const na, size_t p)
 template<class value_t, class size_t, class execution_policy>
 inline void mtv(
 			execution_policy,
-			size_t const m, size_t const p,
+            unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
@@ -292,7 +291,7 @@ inline void mtv(
 template<class value_t, class size_t>
 inline void mtv(
 			execution::sequential_policy,
-			size_t const m, size_t const p,
+            unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
@@ -317,7 +316,7 @@ inline void mtv(
 template<class value_t, class size_t>
 inline void mtv(
 			execution::parallel_policy,
-			size_t const m, size_t const p,
+            unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
@@ -344,7 +343,7 @@ inline void mtv(
 template<class value_t, class size_t>
 inline void mtv(
 			execution::parallel_blas_policy,
-			size_t const m, size_t const p,
+            unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
 			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
@@ -365,6 +364,4 @@ inline void mtv(
 
 
 
-} // namespace tlib::detail
-
-#endif // TLIB_DETAIL_MV_H
+} // namespace tlib::ttv:detail

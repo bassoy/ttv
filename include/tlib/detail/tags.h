@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_POLICIES_H
-#define TLIB_DETAIL_POLICIES_H
+#pragma once
 
 
 namespace tlib::execution
@@ -52,7 +51,3 @@ inline constexpr outer_policy   outer;
 inline constexpr all_policy     all;
 
 }
-
-
-
-#endif

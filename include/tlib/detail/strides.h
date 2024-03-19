@@ -15,8 +15,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TLIB_DETAIL_STRIDE_H
-#define TLIB_DETAIL_STRIDE_H
+#pragma once
 
 #include <algorithm>
 #include <iterator>
@@ -26,7 +25,7 @@
 #include "layout.h"
 
 
-namespace tlib::detail
+namespace tlib::ttv::detail
 {
 
 template<class InputIt1, class InputIt2, class OutputIt>
@@ -101,6 +100,4 @@ inline bool is_valid_strides(InputIt1 layout_begin, InputIt1 layout_end, InputIt
 	//	[stride_begin]( auto l ) {return stride_begin[l-2] > stride_begin[l-1];} );
 }
 
-} // namespace tlib::detail
-
-#endif // TLIB_STRIDE_H
+} // namespace tlib::ttv::detail

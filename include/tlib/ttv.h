@@ -15,14 +15,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FHG_TENSOR_VECTOR_MULTIPLICATION_H
-#define FHG_TENSOR_VECTOR_MULTIPLICATION_H
+#pragma once
 
 #include "detail/tensor_times_vector.h"
 #include "detail/tensor.h"
 #include "detail/tags.h"
 
-namespace tlib
+namespace tlib::ttv
 {
 		
 
@@ -102,8 +101,8 @@ inline auto tensor_times_vector(
 	std::size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
 	execution_policy ep, slicing_policy sp, fusion_policy fp)  
 {
-	auto c_shape  = tlib::detail::generate_output_shape (a.shape() ,q);
-	auto c_layout = tlib::detail::generate_output_layout(a.layout(),q);
+    auto c_shape  = detail::generate_output_shape (a.shape() ,q);
+    auto c_layout = detail::generate_output_layout(a.layout(),q);
 	auto c        = tensor<value_t>( c_shape, c_layout  );
 
 	tensor_times_vector( ep, sp, fp, q, a.order(), 
@@ -114,16 +113,14 @@ inline auto tensor_times_vector(
 	return c;
 }
 
-}
+} // namespace tlib::ttv
 
 /**
  * \brief Implements a mode-q tensor-times-vector-multiplication
  *
  */
 template<class value_t>
-inline auto operator*(tlib::tensor_view<value_t> const& a,  tlib::tensor<value_t> const& b)
+inline auto operator*(tlib::tensor_view<value_t> const& a,  tlib::ttv::tensor<value_t> const& b)
 {
-	return tensor_times_vector(a.contraction_mode(), a.get_tensor(),  b, tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all) ;
+    return tlib::ttv::tensor_times_vector(a.contraction_mode(), a.get_tensor(),  b, tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all) ;
 }
-
-#endif // FHG_TENSOR_VECTOR_MULTIPLICATION_H
