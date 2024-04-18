@@ -120,7 +120,7 @@ inline auto tensor_times_vector(
  *
  */
 template<class value_t>
-inline auto operator*(tlib::tensor_view<value_t> const& a,  tlib::ttv::tensor<value_t> const& b)
+inline auto operator*(tlib::ttv::tensor_view<value_t> const& a,  tlib::ttv::tensor<value_t> const& b)
 {
     return tlib::ttv::tensor_times_vector(a.contraction_mode(), a.get_tensor(),  b, tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all) ;
 }

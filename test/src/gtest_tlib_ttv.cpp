@@ -60,7 +60,7 @@ inline void ttv_init(
 	assert(p>=2);
 	assert(1<=q && q <= p);
 	
-	const size_type q1 = tlib::detail::inverse_mode(pia.begin(), pia.end(), q );
+	const size_type q1 = tlib::ttv::detail::inverse_mode(pia.begin(), pia.end(), q );
 	assert(1<=q1 && q1 <= p);
 		
 	size_type k = 0ul;
@@ -112,9 +112,9 @@ ttv_check(
 	
 	auto const nq = na.at(q-1);
 
-	auto pic = tlib::detail::generate_output_layout(pia,q);
-	auto nc  = tlib::detail::generate_output_shape (na ,q);	
-	auto wc  = tlib::detail::generate_strides      (nc ,pic );
+	auto pic = tlib::ttv::detail::generate_output_layout(pia,q);
+	auto nc  = tlib::ttv::detail::generate_output_shape (na ,q);	
+	auto wc  = tlib::ttv::detail::generate_strides      (nc ,pic );
 	
 	auto nb  = std::vector<size_type>{b.size()};
 	
@@ -122,14 +122,14 @@ ttv_check(
 	
 	auto c = std::vector(nnc,value_type{});
 	
-	tlib::tensor_times_vector(ep,sp,fp,  q,p,  a.data(), na.data(), wa.data(), pia.data(), b.data(), nb.data(), c.data(), nc.data(), wc.data(), pic.data());
+	tlib::ttv::tensor_times_vector(ep,sp,fp,  q,p,  a.data(), na.data(), wa.data(), pia.data(), b.data(), nb.data(), c.data(), nc.data(), wc.data(), pic.data());
 	
 	
 //	std::cout <<"c = [ "; std::copy(c.begin(), c.end(), std::ostream_iterator<value_type>(std::cout, " ")); std::cout <<"];" << std::endl;
 	
 	auto compute_element = [nq](size_type i){return (nq*nq*(2ul*i-1ul)+nq)/2ul;};
 	
-	auto q1 = tlib::detail::inverse_mode(pia.begin(),pia.end(),q);	
+	auto q1 = tlib::ttv::detail::inverse_mode(pia.begin(),pia.end(),q);	
 	assert(2u <= p);
 	assert(1u <= q1 && q1 <= p);
 	
@@ -159,18 +159,18 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 	for(auto const& na : shapes)
 	{
 
-		assert(tlib::detail::is_valid_shape(na.begin(), na.end()));
+		assert(tlib::ttv::detail::is_valid_shape(na.begin(), na.end()));
 
 		auto nna = std::accumulate(na.begin(),na.end(), 1ul, std::multiplies<size_type>());		
 		auto a   = std::vector<value_type>(nna,value_type{});		
 
 		for(auto const& pia : layouts)
 		{
-			assert(tlib::detail::is_valid_layout(pia.begin(), pia.end()));
+			assert(tlib::ttv::detail::is_valid_layout(pia.begin(), pia.end()));
 
-			auto wa = tlib::detail::generate_strides (na ,pia );
+			auto wa = tlib::ttv::detail::generate_strides (na ,pia );
 			
-			assert(tlib::detail::is_valid_strides(pia.begin(), pia.end(),wa.begin()));
+			assert(tlib::ttv::detail::is_valid_strides(pia.begin(), pia.end(),wa.begin()));
 
 			for(auto q = 1ul; q <= rank; ++q)
 			{

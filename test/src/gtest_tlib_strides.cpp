@@ -32,32 +32,32 @@ using strides_t  = std::vector<std::size_t>;
 TEST(StridesTest, ScalarShape)
 {
 	auto l1 = layout_t{1};
-	auto v1 = tlib::detail::generate_strides(extents_t{1},l1);
+	auto v1 = tlib::ttv::detail::generate_strides(extents_t{1},l1);
 	ASSERT_EQ(v1.size(),1u);
 	EXPECT_EQ(1u, v1[0u]);	
-	ASSERT_TRUE(tlib::detail::is_valid_strides(l1.begin(), l1.end(), v1.begin()));
+	ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(l1.begin(), l1.end(), v1.begin()));
 }
 
 TEST(StridesTest, VectorShape)
 {
 	auto l0 = layout_t{1,2};
-	auto v0 = tlib::detail::generate_strides(extents_t{1,1},l0);
+	auto v0 = tlib::ttv::detail::generate_strides(extents_t{1,1},l0);
 	ASSERT_EQ(v0.size(),2u);
 	EXPECT_EQ(1u, v0[0u]);	
 	EXPECT_EQ(1u, v0[1u]);	
-	ASSERT_TRUE(tlib::detail::is_valid_strides(l0.begin(), l0.end(), v0.begin()));
+	ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(l0.begin(), l0.end(), v0.begin()));
 	
 	auto extents = std::vector<extents_t>{ extents_t{1,2}, {1,4}, {1,8}, {2,1}, {4,1}, {8,1}  };	
 	auto layouts = std::vector<layout_t >{ layout_t {1,2}, {2,1}  };
 	
 	for(auto const& extent : extents){
-		ASSERT_TRUE(tlib::detail::is_vector(extent.begin(), extent.end()));
+		ASSERT_TRUE(tlib::ttv::detail::is_vector(extent.begin(), extent.end()));
 		for(auto const& layout : layouts){
-			auto v = tlib::detail::generate_strides(extent,layout);			
+			auto v = tlib::ttv::detail::generate_strides(extent,layout);			
 			ASSERT_EQ(v.size(),2u);
 			EXPECT_EQ(1u, v[0u]);
 			EXPECT_EQ(1u, v[1u]);
-			ASSERT_TRUE(tlib::detail::is_valid_strides(layout.begin(), layout.end(),v.begin()));	
+			ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(layout.begin(), layout.end(),v.begin()));	
 		}
 	}
 }
@@ -69,21 +69,21 @@ TEST(StridesTest, MatrixShape)
 	auto layouts = std::vector<layout_t >{ layout_t {1,2}, {2,1}  };
 	
 	for(auto const& extent : extents){
-		auto strides = tlib::detail::generate_strides(extent,layouts[0]);
+		auto strides = tlib::ttv::detail::generate_strides(extent,layouts[0]);
 		ASSERT_EQ(strides.size(),2u);
-		ASSERT_TRUE(tlib::detail::is_matrix(extent.begin(), extent.end()));		
+		ASSERT_TRUE(tlib::ttv::detail::is_matrix(extent.begin(), extent.end()));		
 		EXPECT_EQ(1u, strides[0u]);
 		EXPECT_EQ(extent[0], strides[1u]);	
-		ASSERT_TRUE(tlib::detail::is_valid_strides(layouts[0].begin(), layouts[0].end(),strides.begin()));
+		ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(layouts[0].begin(), layouts[0].end(),strides.begin()));
 	}
 	
 	for(auto const& extent : extents){
-		auto strides = tlib::detail::generate_strides(extent,layouts[1]);
+		auto strides = tlib::ttv::detail::generate_strides(extent,layouts[1]);
 		ASSERT_EQ(strides.size(),2u);
-		ASSERT_TRUE(tlib::detail::is_matrix(extent.begin(), extent.end()));		
+		ASSERT_TRUE(tlib::ttv::detail::is_matrix(extent.begin(), extent.end()));		
 		EXPECT_EQ(extent[1], strides[0u]);
 		EXPECT_EQ(1u, strides[1u]);
-		ASSERT_TRUE(tlib::detail::is_valid_strides(layouts[1].begin(), layouts[1].end(), strides.begin()));
+		ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(layouts[1].begin(), layouts[1].end(), strides.begin()));
 	}
 }
 
@@ -95,11 +95,11 @@ TEST(StridesTest, TensorShape)
 		ASSERT_EQ(strides.size(),p);
 		ASSERT_EQ(ref_strides.size(),p);
 		ASSERT_EQ(extents.size(),p);		
-		ASSERT_TRUE(tlib::detail::is_tensor(extents.begin(), extents.end()));		
+		ASSERT_TRUE(tlib::ttv::detail::is_tensor(extents.begin(), extents.end()));		
 		for(auto i = 0u; i < p; ++i)
 			EXPECT_EQ(ref_strides[i], strides[i]);
 		
-		ASSERT_TRUE(tlib::detail::is_valid_strides(layout.begin(), layout.end(), strides.begin()));
+		ASSERT_TRUE(tlib::ttv::detail::is_valid_strides(layout.begin(), layout.end(), strides.begin()));
 	}; 
 	
 	// first-order
@@ -109,7 +109,7 @@ TEST(StridesTest, TensorShape)
 		auto layout      = layout_t {1,2,3}; 
 		
 		for(auto i = 0u; i < extents.size(); ++i){
-			auto strides = tlib::detail::generate_strides(extents[i],layout);
+			auto strides = tlib::ttv::detail::generate_strides(extents[i],layout);
 			test_strides(extents[i].size(),extents[i],strides,ref_strides[i],layout);
 		}
 	}
@@ -121,7 +121,7 @@ TEST(StridesTest, TensorShape)
 		auto layout      = layout_t {3,2,1}; 
 		
 		for(auto i = 0u; i < extents.size(); ++i){
-			auto strides = tlib::detail::generate_strides(extents[i],layout);
+			auto strides = tlib::ttv::detail::generate_strides(extents[i],layout);
 			test_strides(extents[i].size(),extents[i],strides,ref_strides[i],layout);
 		}
 	}
@@ -133,7 +133,7 @@ TEST(StridesTest, TensorShape)
 		auto layout      = layout_t {2,1,3};
 		
 		for(auto i = 0u; i < extents.size(); ++i){
-			auto strides = tlib::detail::generate_strides(extents[i],layout);
+			auto strides = tlib::ttv::detail::generate_strides(extents[i],layout);
 			test_strides(extents[i].size(),extents[i],strides,ref_strides[i],layout);
 		}
 	}

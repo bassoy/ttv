@@ -37,8 +37,8 @@ inline void check_mtv_help(
 	assert(pia.size() == 2u);
 	assert(na .size() == 2u);
 	
-	auto const pic = tlib::detail::generate_output_layout(pia,2u);
-	auto const nc  = tlib::detail::generate_output_shape (na, 2u);	
+	auto const pic = tlib::ttv::detail::generate_output_layout(pia,2u);
+	auto const nc  = tlib::ttv::detail::generate_output_shape (na, 2u);	
 	
 	auto const m = na[0];
 	auto const n = na[1];
@@ -116,11 +116,11 @@ TEST(MatrixTimesVector, Gemv)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col<value_type,size_type>,a,b,cm,na);		
+		check_mtv_help(tlib::ttv::detail::gemv_col<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row<value_type,size_type>,a,b,rm,na);
+		check_mtv_help(tlib::ttv::detail::gemv_row<value_type,size_type>,a,b,rm,na);
 	}
 }
 
@@ -144,11 +144,11 @@ TEST(MatrixTimesVector, GemvParallel)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col_parallel<value_type,size_type>,a,b,cm,na);		
+		check_mtv_help(tlib::ttv::detail::gemv_col_parallel<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row_parallel<value_type,size_type>,a,b,rm,na);
+		check_mtv_help(tlib::ttv::detail::gemv_row_parallel<value_type,size_type>,a,b,rm,na);
 	}
 }
 
@@ -171,11 +171,11 @@ TEST(MatrixTimesVector, GemvBLAS)
 		
 		auto cm = std::vector<size_type>{1,2}; // column-major
 		check_mtv_init(a,na,cm);		
-		check_mtv_help(tlib::detail::gemv_col_blas<value_type,size_type>,a,b,cm,na);		
+		check_mtv_help(tlib::ttv::detail::gemv_col_blas<value_type,size_type>,a,b,cm,na);		
 		
 		auto rm = std::vector<size_type>{2,1}; // row-major		
 		check_mtv_init(a,na,rm);
-		check_mtv_help(tlib::detail::gemv_row_blas<value_type,size_type>,a,b,rm,na);
+		check_mtv_help(tlib::ttv::detail::gemv_row_blas<value_type,size_type>,a,b,rm,na);
 	}
 }
 

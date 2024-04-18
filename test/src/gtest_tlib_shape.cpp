@@ -50,12 +50,12 @@ TEST_F(ShapeTest, is_scalar)
 	auto ints = std::vector<unsigned>{2,6,15};
 	
 	for(auto i : ints){
-		EXPECT_TRUE (tlib::detail::is_scalar(shapes[i].begin(), shapes[i].end()));		
+		EXPECT_TRUE (tlib::ttv::detail::is_scalar(shapes[i].begin(), shapes[i].end()));		
 	}
 
 	for(auto i = 0u; i < shapes.size(); ++i){
 		if(std::find(ints.begin(), ints.end(),i)==ints.end()){
-			EXPECT_FALSE(tlib::detail::is_scalar(shapes[i].begin(), shapes[i].end()));
+			EXPECT_FALSE(tlib::ttv::detail::is_scalar(shapes[i].begin(), shapes[i].end()));
 		}
 	}
 }
@@ -66,11 +66,11 @@ TEST_F(ShapeTest, is_vector)
 	auto ints = std::vector<unsigned>{3,7,8,9,10,17,19};
 	
 	for(auto i : ints ){
-		EXPECT_TRUE (tlib::detail::is_vector(shapes[i].begin(), shapes[i].end()));		
+		EXPECT_TRUE (tlib::ttv::detail::is_vector(shapes[i].begin(), shapes[i].end()));		
 	}
 	for(auto i = 0u; i < shapes.size(); ++i ){
 		if(std::find(ints.begin(), ints.end(),i)==ints.end()){
-			EXPECT_FALSE(tlib::detail::is_vector(shapes[i].begin(), shapes[i].end()));
+			EXPECT_FALSE(tlib::ttv::detail::is_vector(shapes[i].begin(), shapes[i].end()));
 		}
 	}
 }
@@ -81,11 +81,11 @@ TEST_F(ShapeTest, is_matrix)
 	auto ints = std::vector<unsigned>{11,12,21};
 	
 	for(auto i : ints ){
-		EXPECT_TRUE (tlib::detail::is_matrix(shapes[i].begin(), shapes[i].end()));		
+		EXPECT_TRUE (tlib::ttv::detail::is_matrix(shapes[i].begin(), shapes[i].end()));		
 	}
 	for(auto i = 0u; i < shapes.size(); ++i ){
 		if(std::find(ints.begin(), ints.end(),i)==ints.end()){
-			EXPECT_FALSE(tlib::detail::is_matrix(shapes[i].begin(), shapes[i].end()));
+			EXPECT_FALSE(tlib::ttv::detail::is_matrix(shapes[i].begin(), shapes[i].end()));
 		}
 	}
 }
@@ -96,11 +96,11 @@ TEST_F(ShapeTest, is_tensor)
 	auto ints = std::vector<unsigned> {16,18,20,22};
 	
 	for(auto i : ints ){
-		EXPECT_TRUE (tlib::detail::is_tensor(shapes[i].begin(), shapes[i].end()));		
+		EXPECT_TRUE (tlib::ttv::detail::is_tensor(shapes[i].begin(), shapes[i].end()));		
 	}
 	for(auto i = 0u; i < shapes.size(); ++i ){
 		if(std::find(ints.begin(), ints.end(),i)==ints.end()){
-			EXPECT_FALSE(tlib::detail::is_tensor(shapes[i].begin(), shapes[i].end()));
+			EXPECT_FALSE(tlib::ttv::detail::is_tensor(shapes[i].begin(), shapes[i].end()));
 		}
 	}
 }
@@ -110,11 +110,11 @@ TEST_F(ShapeTest, is_valid)
 	auto ints = std::vector<unsigned> {0,1,4,5,13,14};
 	
 	for(auto i : ints ){
-		EXPECT_FALSE(tlib::detail::is_valid_shape(shapes[i].begin(), shapes[i].end()));		
+		EXPECT_FALSE(tlib::ttv::detail::is_valid_shape(shapes[i].begin(), shapes[i].end()));		
 	}
 	for(auto i = 0u; i < shapes.size(); ++i ){
 		if(std::find(ints.begin(), ints.end(),i)==ints.end()){
-			EXPECT_TRUE(tlib::detail::is_valid_shape(shapes[i].begin(), shapes[i].end()));
+			EXPECT_TRUE(tlib::ttv::detail::is_valid_shape(shapes[i].begin(), shapes[i].end()));
 		}
 	}
 }
@@ -212,12 +212,12 @@ TEST_F(ShapeTest, generate_output_shape)
 		for(auto i = 0u; i < ref_shapes.size(); ++i){
 			auto const& ref   = ref_shapes[i];
 			auto const& shape = shapes[i];
-			if(!tlib::detail::is_valid_shape(ref.begin(), ref.end()))
+			if(!tlib::ttv::detail::is_valid_shape(ref.begin(), ref.end()))
 				continue;
 			if(mode > shape.size())
 				continue;
 				
-			auto const& out = tlib::detail::generate_output_shape(shape,mode);
+			auto const& out = tlib::ttv::detail::generate_output_shape(shape,mode);
 			
 			ASSERT_TRUE( ref.size() == out.size() );
 			EXPECT_TRUE( std::equal(ref.begin(), ref.end(), out.begin()) );
