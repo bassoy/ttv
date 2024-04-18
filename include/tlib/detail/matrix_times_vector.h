@@ -185,12 +185,24 @@ inline void gemv_col_blas(
 		size_t const N,
 		size_t const lda)
 {
+#if defined USE_MKLBLAS
+const MKL_INT MM = M;
+const MKL_INT NN = N;
+const MKL_INT LDA = lda;
+const MKL_INT INC = 1;
+#elif defined USE_OPENBLAS
+const auto MM = M;
+const auto NN = N;
+const auto LDA = lda;
+const auto INC = size_t(1);
+#endif
+
 				// CblasColMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
 #if defined USE_MKLBLAS || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
-		cblas_sgemv(CblasColMajor, CblasNoTrans, M,  N, 1.0f,  const_cast<float*const>(a),  lda, const_cast<float*const> (b), 1,  0.0f, const_cast<float*const> (c),  1);
+		cblas_sgemv(CblasColMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c), INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
-		cblas_dgemv(CblasColMajor, CblasNoTrans, M,  N, 1.0 ,  const_cast<double*const>(a),  lda, const_cast<double*const>(b), 1,  0.0 , const_cast<double*const>(c),  1);
+		cblas_dgemv(CblasColMajor, CblasNoTrans, MM,  NN, 1.0 ,  const_cast<double*const>(a), LDA, const_cast<double*const>(b), INC,  0.0 , const_cast<double*const>(c), INC);
 	else
 		gemv_col(a,b,c,M,N,lda);
 #else
@@ -215,12 +227,23 @@ inline void gemv_row_blas(
 		size_t const N, // na_m
 		size_t const lda) // na_m usually as
 {
+#if defined USE_MKLBLAS
+const MKL_INT MM = M;
+const MKL_INT NN = N;
+const MKL_INT LDA = lda;
+const MKL_INT INC = 1;
+#elif defined USE_OPENBLAS
+const auto MM = M;
+const auto NN = N;
+const auto LDA = lda;
+const auto INC = size_t(1);
+#endif
 		// CblasRowMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
 #if defined USE_MKLBLAS || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
-		cblas_sgemv(CblasRowMajor, CblasNoTrans, M,  N, 1.0f,  const_cast<float*const>(a),  lda, const_cast<float*const> (b), 1,  0.0f, const_cast<float*const> (c),  1);
+		cblas_sgemv(CblasRowMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c),  INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
-		cblas_dgemv(CblasRowMajor, CblasNoTrans, M,  N, 1.0 ,  const_cast<double*const>(a),  lda, const_cast<double*const>(b), 1,  0.0 , const_cast<double*const>(c),  1);
+		cblas_dgemv(CblasRowMajor, CblasNoTrans, MM,  NN, 1.0 ,  const_cast<double*const>(a), LDA, const_cast<double*const>(b), INC,  0.0 , const_cast<double*const>(c),  INC);
 	else
 		gemv_row(a,b,c,M,N,lda);
 #else
