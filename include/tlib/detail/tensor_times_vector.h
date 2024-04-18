@@ -23,6 +23,7 @@
 #include <numeric>
 #include <algorithm>
 #include <thread>
+#include <iostream>
 
 #include "matrix_times_vector.h"
 #include "workload_computation.h"
@@ -37,7 +38,7 @@
 #endif
 
 #ifdef USE_MKLBLAS
-#include <mkl.h>
+#include <mkl/mkl.h>
 #endif
 
 
@@ -617,6 +618,9 @@ inline void ttv(
 		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
 
   		set_blas_threads_min();
+  		
+  		//std::cout << "OMP-THREADS = " << get_omp_threads() << std::endl;
+  		//std::cout << "BLAS-THREADS = " << get_blas_threads() << std::endl;
       assert(get_omp_threads()==hwthreads);
   		assert(get_blas_threads() == 1);
 		

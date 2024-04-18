@@ -18,7 +18,7 @@
 #endif
 
 #ifdef USE_MKLBLAS
-#include <mkl.h>
+#include <mkl/mkl.h>
 #endif
 
 
