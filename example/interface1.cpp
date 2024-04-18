@@ -1,5 +1,5 @@
 /*
-# include either -DUSE_OPENBLAS or -DUSE_INTELBLAS for fast execution
+# include either -DUSE_OPENBLAS or -DUSE_MKLBLAS for fast execution
 g++ -I../include/ -std=c++17 -Ofast -fopenmp interface1.cpp -o interface1 && ./interface1
 */
 
