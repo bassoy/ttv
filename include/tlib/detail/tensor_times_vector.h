@@ -36,7 +36,7 @@
 #include <cblas.h>
 #endif
 
-#ifdef USE_INTELBLAS
+#ifdef USE_MKLBLAS
 #include <mkl.h>
 #endif
 
@@ -51,10 +51,61 @@ inline void set_blas_threads(size_t num)
 {
 #ifdef USE_OPENBLAS
 	openblas_set_num_threads(num);
-#elif defined USE_INTELBLAS
+#elif defined USE_MKLBLAS
 	mkl_set_num_threads(num);
 #endif
 }
+
+
+inline unsigned get_blas_threads()
+{
+#ifdef USE_OPENBLAS
+    return openblas_get_num_threads();
+#elif defined USE_MKLBLAS
+    return mkl_get_max_threads();
+#endif
+}
+
+
+static const auto hwthreads = std::thread::hardware_concurrency();
+
+inline void set_blas_threads_max()
+{
+  set_blas_threads(hwthreads); 
+}
+
+inline void set_blas_threads_min()
+{
+  set_blas_threads(1);
+}
+
+
+template<class size_t>
+inline void set_omp_threads(size_t num)
+{
+#ifdef _OPENMP
+  omp_set_num_threads(num);
+#endif
+}
+
+
+inline void set_omp_threads_max()
+{
+#ifdef _OPENMP
+  omp_set_num_threads(hwthreads);
+#endif
+}
+
+inline unsigned get_omp_threads()
+{
+#ifdef _OPENMP
+    return omp_get_num_threads();
+#else
+    return 1;
+#endif
+}
+
+
 
 template<class size_t>
 inline unsigned compute_inverse_pia_m(size_t const*const pia, size_t const*const pic,  unsigned const p, unsigned const m)
@@ -231,8 +282,13 @@ inline void ttv(
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
+	set_omp_threads_max();
+	set_blas_threads_min();
+	
+	assert(get_blas_threads() == 1);
+	assert(get_omp_threads() == hwthreads);
+
 	if(!is_case<8>(p,m,pia)) {
-		set_blas_threads(std::thread::hardware_concurrency());
 		mtv(execution::par,m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -240,8 +296,6 @@ inline void ttv(
 	
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 		size_t const na_pia_1 = na[pia[0]-1];
-
-		set_blas_threads(1);
 
 		// m != pia[p]
 		size_t pia_p = pia[p-1];
@@ -257,7 +311,7 @@ inline void ttv(
 		const auto wa_pia_p = wa[pia_p-1];
 		const auto wc_pic_p = wc[pic_p-1];
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
 		for(size_t i = 0; i < na[pia_p-1]; ++i)
 			multiple_gemv_over_small_tensor_slices(
 				gemv_col<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
@@ -283,12 +337,12 @@ inline void ttv(
 {
 
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+		set_blas_threads_max();
+		assert(get_blas_threads() == hwthreads);
 		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
-		set_blas_threads(1);	
 		
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 		size_t const na_pia_1 = na[pia[0]-1];
@@ -308,10 +362,15 @@ inline void ttv(
 		const auto wa_pia_p = wa[pia_p-1];
 		const auto wc_pic_p = wc[pic_p-1];
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
-		for(size_t i = 0; i < na[pia_p-1]; ++i)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+		for(size_t i = 0; i < na[pia_p-1]; ++i){
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);
+		
 			multiple_gemv_over_small_tensor_slices(
 				gemv_col_blas<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
+		}
 
 	}
 }
@@ -332,12 +391,12 @@ inline void ttv(
 {
 
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+		set_blas_threads_max();
+		assert(get_blas_threads() == hwthreads);
 		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
-		set_blas_threads(1);
 		
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );				
 
@@ -362,10 +421,15 @@ inline void ttv(
 		auto const wa_m1 = wa[pia[inv_pia_m]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(p, m, num, wa_m1,wc_m1,inv_pia_m,  na_m,wa_m,na_pia_1, a,b,c)
-		for(size_t k = 0u; k < num; ++k)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p, m, num, wa_m1,wc_m1,inv_pia_m,  na_m,wa_m,na_pia_1, a,b,c)
+		for(size_t k = 0u; k < num; ++k){
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);
+
 			multiple_gemv_over_small_tensor_slices
 				( gemv_col_blas<value_t,size_t>, inv_pia_m-1, inv_pia_m-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m,  a+k*wa_m1 ,na,wa,pia,  b,  c+k*wc_m1,nc,wc,pic );
+		}
 	}
 }
 
@@ -388,14 +452,13 @@ inline void ttv(
 {
 
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+		set_blas_threads_max();
+		assert(get_blas_threads() == hwthreads);
 		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
 		//auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
-
-		set_blas_threads(1);
 
 		assert(m > 0);
 		assert(p>2);
@@ -436,8 +499,14 @@ inline void ttv(
 
 
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
 		for(size_t k = 0; k < nn; ++k){
+
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);
+		
+		
 			auto ka = at_at_1(k, va2, wa2, pia2);
 			auto kc = at_at_1(k, va2, wc2, pia2);
 			auto const*const ap = a + ka;
@@ -518,7 +587,8 @@ inline void ttv(
 {
 	
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
 		mtv(execution::par, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -529,8 +599,6 @@ inline void ttv(
 
 		auto const na_m = na[m-1];
 		auto const wa_m = wa[m-1];
-
-		set_blas_threads(1);
 
 		// m != pia[0] && m != pia[p-1]
 		assert(p>2);
@@ -545,10 +613,16 @@ inline void ttv(
 
 		auto n = compute_ninvpia( na, pia, inv_pia_m ); // this is for the most inner computation
 		assert(n == wa_m);
-		#pragma omp parallel for schedule(dynamic) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
-		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
+
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);
+		
 			multiple_gemv_over_large_tensor_slices
 				( gemv_col<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic );
+		}
 	}
 }
 
@@ -570,7 +644,8 @@ inline void ttv(
 {
 	
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
 		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {					
@@ -584,7 +659,6 @@ inline void ttv(
 		auto const na_m = na[m-1];
 		auto const wa_m = wa[m-1];
 
-		set_blas_threads(1);
 
 		auto maxp = size_t{};
 		for(auto k = inv_pia_m; k <= p; ++k)
@@ -597,10 +671,15 @@ inline void ttv(
 		auto n = compute_ninvpia( na, pia, inv_pia_m ); // this is for the most inner computation
 		assert(n == wa_m);
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
-		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);		
+		
 			multiple_gemv_over_large_tensor_slices 
 				(gemv_col_blas<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic);
+		}
 	}
 }
 
@@ -621,7 +700,8 @@ inline void ttv(
 			)
 {	
 	if(!is_case<8>(p,m,pia)){
-		set_blas_threads(std::thread::hardware_concurrency());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
 		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
@@ -632,8 +712,6 @@ inline void ttv(
 
 		assert(p>2);
 		assert(inv_pia_m!=p);
-
-		set_blas_threads(1);
 
 		assert(p>inv_pia_m);
 		assert(inv_pia_m>0);
@@ -648,10 +726,16 @@ inline void ttv(
 		auto const wa_m1 = wa[pia[inv_pia_m  ]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
-		#pragma omp parallel for schedule(dynamic) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
-		for(size_t i = 0; i < num; ++i)
+		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+		for(size_t i = 0; i < num; ++i){
+
+  		set_blas_threads_min();
+      assert(get_omp_threads()==hwthreads);
+  		assert(get_blas_threads() == 1);
+		
 			multiple_gemv_over_large_tensor_slices
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
+		}
 	}
 }
 

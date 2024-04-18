@@ -17,7 +17,7 @@
 #include <cblas.h>
 #endif
 
-#ifdef USE_INTELBLAS
+#ifdef USE_MKLBLAS
 #include <mkl.h>
 #endif
 
@@ -186,7 +186,7 @@ inline void gemv_col_blas(
 		size_t const lda)
 {
 				// CblasColMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_INTELBLAS || defined USE_OPENBLAS
+#if defined USE_MKLBLAS || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasColMajor, CblasNoTrans, M,  N, 1.0f,  const_cast<float*const>(a),  lda, const_cast<float*const> (b), 1,  0.0f, const_cast<float*const> (c),  1);
 	else if constexpr ( std::is_same<value_t,double>::value )
@@ -216,7 +216,7 @@ inline void gemv_row_blas(
 		size_t const lda) // na_m usually as
 {
 		// CblasRowMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_INTELBLAS || defined USE_OPENBLAS
+#if defined USE_MKLBLAS || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasRowMajor, CblasNoTrans, M,  N, 1.0f,  const_cast<float*const>(a),  lda, const_cast<float*const> (b), 1,  0.0f, const_cast<float*const> (c),  1);
 	else if constexpr ( std::is_same<value_t,double>::value )
