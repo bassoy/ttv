@@ -23,10 +23,12 @@ namespace tlib::execution
 struct sequential_policy    {};
 struct parallel_policy      {};
 struct parallel_blas_policy {};
+struct threaded_blas_policy {};
 
 inline constexpr sequential_policy    seq;
 inline constexpr parallel_policy      par;
 inline constexpr parallel_blas_policy blas;
+inline constexpr threaded_blas_policy threaded;
 }
 
 namespace tlib::slicing
