@@ -268,6 +268,34 @@ inline void ttv(
 }
 
 
+/*
+ *
+ *
+*/
+template<class value_t, class size_t>
+inline void ttv(
+			execution::sequential_blas_policy, slicing::small_policy, loop_fusion::none_policy,
+            unsigned const m, unsigned const p,
+			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const b, size_t const*const nb,
+			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+  set_blas_threads_min();
+  
+	if(!is_case<8>(p,m,pia)){
+		 mtv(execution::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {
+		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+		size_t const na_pia_1 = na[pia[0]-1];
+
+		multiple_gemv_over_small_tensor_slices(
+			gemv_col_blas<value_t,size_t>, p, p-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+	}
+}
+
+
 
 /*
  *
@@ -608,9 +636,6 @@ inline void ttv(
  *
  *
 */
-//template<class value_t>
-//struct TensorTimesVector<value_t,large_slices_tag,sequential_tag,none_tag>
-
 template<class value_t, class size_t>
 inline void ttv(
 			execution::sequential_policy, slicing::large_policy, loop_fusion::none_policy,
@@ -639,6 +664,48 @@ inline void ttv(
 		multiple_gemv_over_large_tensor_slices( gemv_col<value_t,size_t>, p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
 	}
 }
+
+
+/** \brief Implements a tensor-times-vector-multiplication with large tensor slices
+ *
+ * Performs a matrix-times-vector in the most inner recursion level where the matrix has the dimensions na_m x nn.
+ * Squeezed matrix is a subtensor where we assume large memory
+ * It is a very simply matrix-times-vector implementation.
+ *
+ *
+*/
+template<class value_t, class size_t>
+inline void ttv(
+			execution::sequential_blas_policy, slicing::large_policy, loop_fusion::none_policy,
+            unsigned const m,
+            unsigned const p,
+			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const __restrict b, size_t const*const nb,
+			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+
+  set_blas_threads_min();
+
+	if(!is_case<8>(p,m,pia)){
+		mtv(execution::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {
+		assert(is_case<8>(p,m,pia));
+		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+
+		assert(m>0);
+
+		auto const na_m = na[m-1];
+		auto const wa_m = wa[m-1];
+
+		auto const n = compute_ninvpia( na, pia, inv_pia_m );
+		assert(n == wa_m);
+		multiple_gemv_over_large_tensor_slices( gemv_col_blas<value_t,size_t>, p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+	}
+}
+
+
 	
 	
 
