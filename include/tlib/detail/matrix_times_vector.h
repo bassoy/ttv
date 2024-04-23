@@ -329,7 +329,6 @@ inline void mtv(
 	else if(is_case<5>(p,m,pia)) gemv_row(a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
 	else if(is_case<6>(p,m,pia)) gemv_row(a,b,c,n,na[m-1],na[m-1]);
 	else if(is_case<7>(p,m,pia)) gemv_col(a,b,c,n,na[m-1],n);
-
 }
 
 
@@ -382,8 +381,27 @@ inline void mtv(
 	else if(is_case<5>(p,m,pia)) gemv_row_blas (a,b,c,na[0],na[1],na[1] ); // last-order  (row-major)
 	else if(is_case<6>(p,m,pia)) gemv_row_blas (a,b,c,n,na[m-1],na[m-1]);
 	else if(is_case<7>(p,m,pia)) gemv_col_blas (a,b,c,n,na[m-1],n);	
-	
 }
+
+
+template<class value_t, class size_t>
+inline void mtv(
+			execution::sequential_blas_policy,
+            unsigned const m, unsigned const p,
+			value_t const*const a, size_t const*const na,     size_t const*const wa, size_t const*const pia,
+			value_t const*const b, size_t const*const nb,
+			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+
+  mtv(execution::parallel_blas_policy{},
+            m, p,
+			a, na, wa, pia,
+			b, nb,
+			c, nc, wc, pic
+			);
+}
+
 
 
 
