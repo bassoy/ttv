@@ -25,12 +25,15 @@ struct sequential_blas_policy {};
 struct parallel_policy      {};
 struct parallel_blas_policy {};
 struct threaded_blas_policy {};
+struct parallel_threaded_blas_policy{};
 
 inline constexpr sequential_policy    seq;
 inline constexpr sequential_blas_policy    seq_blas;
 inline constexpr parallel_policy      par;
 inline constexpr parallel_blas_policy blas;
 inline constexpr threaded_blas_policy threaded;
+inline constexpr parallel_threaded_blas_policy parallel_threaded;
+
 }
 
 namespace tlib::slicing
