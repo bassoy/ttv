@@ -623,6 +623,85 @@ inline void ttv(
 
 
 
+template<class value_t, class size_t>
+inline void ttv(
+			execution::parallel_threaded_blas_policy, slicing::small_policy, loop_fusion::all_policy,	
+            unsigned const m,
+            unsigned const p,
+            double ratio,
+			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const b, size_t const*const nb,
+			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+
+	if(!is_case<8>(p,m,pia)){
+		set_blas_threads_max();
+		assert(get_blas_threads() == hwthreads);
+		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {
+		assert(is_case<8>(p,m,pia));
+		//auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+
+		assert(m > 0);
+		assert(p>2);
+
+		assert(pia[0]!=pia[p-1] );
+		//assert(inv_pia_m != p);
+		assert(m != pia[p-1]);
+
+		auto const na_pia_1 = na[pia[0]-1];
+
+		auto const na_m = na[m-1];
+		auto const wa_m = wa[m-1];
+
+		auto const pia_pair = divide_layout(pia, p, m);
+		auto const pia2 = pia_pair.second; // same for a and c
+		assert(pia_pair.first.size() == 2);
+		assert(pia2.size() > 0);
+
+		auto const wa_pair = divide(wa, pia, p, m);
+		auto const wa2 = wa_pair.second; // NOT same for a and c
+		assert(wa_pair.first.size() == 2);
+		assert(wa2.size() > 0);
+
+		auto const wc_pair = divide(wc, pic, p-1);
+		auto const wc2 = wc_pair.second; // NOT same for a and c
+		assert(wc_pair.first.size() == 1);
+		assert(wc2.size() > 0);
+
+		assert(wc2.size() == wa2.size());
+
+		auto const na_pair = divide(na, pia, p, m);
+		auto const na2 = na_pair.second; // same for a and c
+		assert(na2.size() > 0);
+		
+		auto const nn = std::accumulate(na2.begin(),na2.end(),1ul,std::multiplies<>());
+		//auto const nn = na2.product();
+		auto va2 = generate_strides(na2,pia2); // same for a and c
+
+
+    const auto ompthreads = unsigned (double(hwthreads)*ratio);
+    const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
+
+#pragma omp parallel for schedule(dynamic) num_threads(ompthreads) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+		for(size_t k = 0; k < nn; ++k){
+
+  		set_blas_threads(blasthreads);
+		
+			auto ka = at_at_1(k, va2, wa2, pia2);
+			auto kc = at_at_1(k, va2, wc2, pia2);
+			auto const*const ap = a + ka;
+			auto      *const cp = c + kc;
+			gemv_col_blas( ap,b,cp, na_pia_1, na_m, wa_m  );
+		}
+	}
+}
+
+
+
+
 
 
 
@@ -932,6 +1011,64 @@ inline void ttv(
 		}
 	}
 }
+
+
+
+template<class value_t, class size_t>
+inline void ttv(
+			execution::parallel_threaded_blas_policy, slicing::large_policy, loop_fusion::all_policy,
+            unsigned const m,
+            unsigned const p,
+            double ratio,
+			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const __restrict b, size_t const*const nb,
+			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{	
+	if(!is_case<8>(p,m,pia)){
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
+		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {		
+		assert(is_case<8>(p,m,pia));
+		assert(m>0);
+		
+		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+
+		assert(p>2);
+		assert(inv_pia_m!=p);
+
+		assert(p>inv_pia_m);
+		assert(inv_pia_m>0);
+
+		auto const na_m = na[m-1];
+		auto const wa_m = wa[m-1];
+
+		auto num = 1u;
+		for(auto i = inv_pia_m; i < p; ++i)
+			num *= na[pia[i]-1];
+
+		auto const wa_m1 = wa[pia[inv_pia_m  ]-1];
+		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
+		
+		
+		const auto ompthreads = unsigned (double(hwthreads)*ratio);
+    const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
+
+
+#pragma omp parallel for schedule(dynamic) num_threads(ompthreads) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+		for(size_t i = 0; i < num; ++i){
+
+  		set_blas_threads(blasthreads);
+		
+			multiple_gemv_over_large_tensor_slices
+				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
+		}
+	}
+}
+
+
 
 } // namespace tlib::ttv::detail
 
