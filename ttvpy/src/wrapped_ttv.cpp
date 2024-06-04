@@ -23,6 +23,8 @@ ttv(std::size_t const contraction_mode,
     py::array_t<T> const& b)
 {
 
+  using namespace tlib::ttv;
+
   auto const q = contraction_mode;
   
   auto const sizeofT = sizeof(T);
@@ -49,9 +51,9 @@ ttv(std::size_t const contraction_mode,
   //auto const nnb = binfo.size;
   //auto const pb  = binfo.ndim;
   
-	auto const nc  = tlib::detail::generate_output_shape (na ,q);
-	auto const pic = tlib::detail::generate_output_layout(pia,q);	
-	auto       wc  = tlib::detail::generate_strides(nc,pic);	
+	auto const nc  = tlib::ttv::detail::generate_output_shape (na ,q);
+	auto const pic = tlib::ttv::detail::generate_output_layout(pia,q);	
+	auto       wc  = tlib::ttv::detail::generate_strides(nc,pic);	
 
 	auto       nc_ = std::vector<py::ssize_t>(nc.begin(),nc.end());
 	auto       wc_ = std::vector<py::ssize_t>(wc.begin(),wc.end());
@@ -67,11 +69,11 @@ ttv(std::size_t const contraction_mode,
 
   
 #ifndef _OPENMP
-  tlib::tensor_times_vector<T>(tlib::execution::seq,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
-#elif defined(USE_OPENBLAS) || defined(USE_MKL)
-  tlib::tensor_times_vector<T>(tlib::execution::blas,  tlib::slicing::large, tlib::loop_fusion::all , q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+  tensor_times_vector<T>(tlib::execution::seq,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+#elif defined(USE_OPENBLAS) || defined(USE_MKLBLAS)
+  tensor_times_vector<T>(tlib::execution::blas,  tlib::slicing::large, tlib::loop_fusion::all , q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
 #else 
-  tlib::tensor_times_vector<T>(tlib::execution::par,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+  tensor_times_vector<T>(tlib::execution::par,   tlib::slicing::large, tlib::loop_fusion::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
 #endif
 
   return c;  
