@@ -18,18 +18,22 @@ class custom_build_ext(build_ext):
         self.compiler.set_executable("linker_so", "g++")
         build_ext.build_extensions(self)
 
-#g++ -Wall -shared -std=c++17 src/wrapped_ttv.cpp -o ttvpy.so $(python3 -m pybind11 --includes) -I../include -fPIC -fopenmp -DUSE_OPENBLAS -lm -lopenblas
-# python3 setup.py clean --all && rm -rf __pycache__ ttvpy.cpython-38-x86_64-linux-gnu.so build/
-# python3 setup.py build_ext -i
-# sudo pip install -e .
-# python3 -m unittest discover -v
+#OpenMP
+#compile_args = ['-std=c++17','-O3','-fopenmp','-fPIC','-DUSE_OPENBLAS']
+#include_dirs = ['../include','../../include','pybind11/include','/usr/include/x86_64-linux-gnu/openblas64-pthread']
+#libraries=['openblas','m']
+#extra_link_args=['-fopenmp']
 
-compile_args = ['-std=c++17','-O3','-fopenmp','-fPIC','-DUSE_OPENBLAS'] # '-Wall', 
-include_dirs = ['../include','../../include','pybind11/include'] #  '../../../include', '../../include', 
+#IntelMKL
+compile_args = ['-std=c++17','-O3','-fopenmp','-fPIC','-DUSE_MKLBLAS', '-DMKL_ILP64', '-m64']
+include_dirs = ['../include','../../include','pybind11/include','/usr/include/mkl']
+libraries=['m','dl','iomp5']
+extra_link_args=['-Wl,--start-group','/usr/lib/x86_64-linux-gnu/libmkl_intel_ilp64.a','/usr/lib/x86_64-linux-gnu/libmkl_intel_thread.a','/usr/lib/x86_64-linux-gnu/libmkl_core.a','-Wl,--end-group','-fopenmp']
+
+
 name='ttvpy'
 sources=['src/wrapped_ttv.cpp']
-libraries=['openblas','m'] # '-lm', ,'-lopenblas'
-extra_link_args=['-fopenmp']
+
 
 ext_modules = [
   Pybind11Extension(
