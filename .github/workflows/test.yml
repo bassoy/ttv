@@ -1,0 +1,56 @@
+name: "Linux"
+
+on:
+  push:
+    branches:
+      - main  # Adjust this to your main branch name
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup C++ Environment
+      run: |
+        sudo apt update && sudo apt install -y g++ libomp-dev libopenblas-dev libmkl-dev intel-mkl python3-pip python3-virtualenv
+        
+    - name: Install Gtest
+      run: |
+        git clone https://github.com/google/googletest.git
+        cd googletest
+        mkdir build
+        cd build
+        cmake .. -DBUILD_GMOCK=OFF
+        make -j
+        sudo make install
+      
+    - name: Git Clone TTV Repo
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        git clone https://github.com/bassoy/ttv.git
+
+    - name: Build and Run Tests (Intel MKL)
+      run: |
+        cd ttm/test
+        make clean && make -j BLAS_FLAG=MKL
+        ./bin/main
+
+    - name: Build and Run Tests (OpenBLAS)
+      run: |
+        cd ttm/test
+        make clean && make -j BLAS_FLAG=OPENBLAS
+        ./bin/main
+        
+    - name: Build and Run Python Wrapper Tests (OpenBLAS)
+      run: |
+        cd ttm/ttmpy
+        virtualenv ~/env-ttm
+        source ~/env-ttm/bin/activate
+        pip install -e .
+        cd tests
+        python3 -m unittest discover -v
+        deactivate

@@ -3,21 +3,23 @@ High-Performance Tensor-Vector Multiplication Library (TTV)
 [![Language](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/bassoy/ttv/blob/master/LICENSE)
 [![Wiki](https://img.shields.io/badge/ttv-wiki-blue.svg)](https://github.com/bassoy/ttv/wiki)
-[![Gitter](https://img.shields.io/badge/ttv-chat%20on%20gitter-4eb899.svg)](https://gitter.im/bassoy)
+[![Discussions](https://img.shields.io/badge/ttv-discussions-blue.svg)](https://github.com/bassoy/ttv/discussions)
 [![Build Status](https://travis-ci.org/bassoy/ttv.svg?branch=master)](https://travis-ci.org/bassoy/ttv)
+[![Build Status](https://github.com/bassoy/ttv/actions/workflows/test.yml/badge.svg)](https://github.com/bassoy/ttv/actions)
 
 ## Summary
 **TTV** is C++ high-performance tensor-vector multiplication **header-only library**
 It provides free C++ functions for parallel computing the **mode-`q` tensor-times-vector product** of the general form
 
-![ttv](https://github.com/bassoy/ttv/blob/master/misc/equation.png)
+$$
+\underline{\mathbf{C}} = \underline{\mathbf{A}} \times_q \mathbf{b} \quad :\Leftrightarrow \quad
+\underline{\mathbf{C}} (i_1, \dots, i_{q-1}, i_{q+1}, \dots, i_p) = \sum_{i_q=1}^{n_q} \underline{\mathbf{A}}({i_1, \dots, i_q,  \dots, i_p}) \cdot \mathbf{b}({i_q}).
+$$
 
-where `q` is the contraction mode, `A` and `C` are tensors of order `p` and `p-1`, respectively, `b` is a tensor of order `1`, thus a vector.
-Simple examples of tensor-vector multiplications are the inner-product `c = a[i] * b[i]` with `q=1` and the matrix-vector multiplication `c[i] = A[i,j] * b[j]` with `q=2`.
-The number of dimensions (order) `p` and the dimensions `n[r]` as well as a non-hierarchical storage format `pi` of the tensors `A` and `C` can be chosen at runtime.
+where $q$ is the contraction mode, $\underline{\mathbf{A}}$ and $\underline{\mathbf{C}}$ are tensors of order $p$ and $p-1$ with shapes $\mathbf{n}\_a= (n\_1,\dots n\_{q-1},n\_q ,n\_{q+1},\dots,n\_p)$ and $\mathbf{n}\_c = (n\_1,\dots,n\_{q-1},n\_{q+1},\dots,n\_p)$, respectively. $\mathbf{b}$ is a vector of length $n\_{q}$.
 
-All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of `BLAS` such as OpenBLAS or Intel MKL without transposing the tensor.
-The library is an extension of the [boost/ublas](https://github.com/boostorg/ublas) tensor library containing the sequential version. Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
+All function implementations are based on the Loops-Over-GEMM (LOG) approach and utilize high-performance `GEMV` or `DOT` routines of a `BLAS` implementation such as OpenBLAS or Intel MKL.
+Implementation details and runtime behevior of the tensor-vector multiplication functions are described in the [research paper article](https://link.springer.com/chapter/10.1007/978-3-030-22734-0_3).
 
 Please have a look at the [wiki](https://github.com/bassoy/ttv/wiki) page for more informations about the **usage**, **function interfaces** and the **setting parameters**.
 
@@ -53,7 +55,7 @@ The comparison includes three state-of-the-art libraries that implement three di
 * [TBLIS](https://github.com/devinamatthews/tblis) ( v1.0.0 ) implements the GETT approach.
 * [EIGEN](https://bitbucket.org/eigen/eigen/src/default/) ( v3.3.90 ) sequentially executes the tensor-times-vector in-place.
 
-The experiments were carried out with asymmetrically-shaped and symmetrically-shaped tensors in order to provide a comprehensive test coverage where
+The experiments have been carried out with asymmetrically-shaped and symmetrically-shaped tensors in order to provide a comprehensive test coverage where
 the tensor elements are stored according to the first-order storage format.
 The tensor order of the asymmetrically- and symmetrically-shaped tensors have been varied from `2` to `10` and `2` to `7`, respectively.
 The contraction mode `q` has also been varied from `1` to the tensor order.
