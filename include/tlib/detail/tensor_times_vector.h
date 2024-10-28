@@ -38,7 +38,6 @@
 #endif
 
 #ifdef USE_MKLBLAS
-//#include <mkl/mkl.h>
 #include <mkl.h>
 #include <mkl_cblas.h>
 #endif
@@ -54,7 +53,7 @@ inline void set_blas_threads(size_t num)
 {
 #ifdef USE_OPENBLAS
 	openblas_set_num_threads(num);
-#elif defined USE_MKLBLAS
+#elif defined USE_MKL
 	mkl_set_num_threads(num);
 #endif
 }
@@ -64,7 +63,7 @@ inline unsigned get_blas_threads()
 {
 #ifdef USE_OPENBLAS
     return openblas_get_num_threads();
-#elif defined USE_MKLBLAS
+#elif defined USE_MKL
     return mkl_get_max_threads();
 #else
     return 1;
@@ -141,7 +140,9 @@ inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, unsig
 {
     assert(invpia_m>0u);
     size_t nn = 1ul;
-    for(auto r = 0u; r<(invpia_m-1); ++r) nn *= na[pia[r]-1];
+    for(auto r = 0u; r<(invpia_m-1); ++r){
+        nn *= na[pia[r]-1];
+    }
 	return nn;
 }
 
@@ -235,9 +236,9 @@ inline void multiple_gemv_over_large_tensor_slices (
  * @tparam loop_fusion      type of the loop fusion method, i.e. fusing none, all outer or even all free fusible loops
  * @tparam parallelization  type of the loop parallelization method, i.e. sequential, parallel or parallel with blas.
 */
-template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
+template<class value_t, class size_t, class execution, class slicing, class fusion>
 inline void ttv(
-	execution_policy, slicing_policy, fusion_policy,
+	execution, slicing, fusion,
     unsigned const m, unsigned const p,
 	value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 	value_t const*const b, size_t const*const nb,
@@ -252,7 +253,7 @@ inline void ttv(
 */
 template<class value_t, class size_t>
 inline void ttv(
-			execution::sequential_policy, slicing::small_policy, loop_fusion::none_policy,
+			execution_policy::sequential_t, slicing_policy::slice_t, fusion_policy::none_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
@@ -260,7 +261,7 @@ inline void ttv(
 			)
 {
 	if(!is_case<8>(p,m,pia)){
-		 mtv(execution::seq, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		 mtv(execution_policy::seq, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
@@ -278,7 +279,7 @@ inline void ttv(
 */
 template<class value_t, class size_t>
 inline void ttv(
-			execution::sequential_blas_policy, slicing::small_policy, loop_fusion::none_policy,
+			execution_policy::sequential_blas_t, slicing_policy::slice_t, fusion_policy::none_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
@@ -288,7 +289,7 @@ inline void ttv(
   set_blas_threads_min();
   
 	if(!is_case<8>(p,m,pia)){
-		 mtv(execution::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		 mtv(execution_policy::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
@@ -307,7 +308,7 @@ inline void ttv(
 */
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_policy, slicing::small_policy, loop_fusion::none_policy,		
+			execution_policy::parallel_t, slicing_policy::slice_t, fusion_policy::none_t,		
             unsigned const m,
             unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -322,7 +323,7 @@ inline void ttv(
 	assert(get_omp_threads() == hwthreads);
 
 	if(!is_case<8>(p,m,pia)) {
-		mtv(execution::par,m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par,m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -344,7 +345,8 @@ inline void ttv(
 		const auto wa_pia_p = wa[pia_p-1];
 		const auto wc_pic_p = wc[pic_p-1];
 
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+        // firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t i = 0; i < na[pia_p-1]; ++i)
 			multiple_gemv_over_small_tensor_slices(
 				gemv_col<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
@@ -360,7 +362,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::none_policy,	
+			execution_policy::parallel_loop_t, slicing_policy::slice_t, fusion_policy::none_t,	
             unsigned const m,
             unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -372,7 +374,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() == hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -395,11 +397,12 @@ inline void ttv(
 		const auto wa_pia_p = wa[pia_p-1];
 		const auto wc_pic_p = wc[pic_p-1];
 
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+        // firstprivate(pia_p,pic_p,p,m,   na_pia_1,inv_pia_m,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t i = 0; i < na[pia_p-1]; ++i){
-  		set_blas_threads_min();
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);
+            set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);
 		
 			multiple_gemv_over_small_tensor_slices(
 				gemv_col_blas<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
@@ -414,7 +417,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::outer_policy,	
+			execution_policy::parallel_loop_t, slicing_policy::slice_t, fusion_policy::outer_t,	
             unsigned const m,
             unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -426,7 +429,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() == hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -444,8 +447,8 @@ inline void ttv(
 
 		auto const na_pia_1 = na[pia[0]-1];
 
-		auto const na_m = na[m-1];
-		auto const wa_m = wa[m-1];
+		//auto const na_m = na[m-1];
+		//auto const wa_m = wa[m-1];
 
 		auto num = 1u;
 		for(auto i = inv_pia_m; i < p; ++i)
@@ -453,12 +456,14 @@ inline void ttv(
 
 		auto const wa_m1 = wa[pia[inv_pia_m]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
+		
+		//firstprivate(p, m, num, wa_m1,wc_m1,inv_pia_m,  na_m,wa_m,na_pia_1, a,b,c)
 
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p, m, num, wa_m1,wc_m1,inv_pia_m,  na_m,wa_m,na_pia_1, a,b,c)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t k = 0u; k < num; ++k){
-  		set_blas_threads_min();
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);
+            set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);
 
 			multiple_gemv_over_small_tensor_slices
 				( gemv_col_blas<value_t,size_t>, inv_pia_m-1, inv_pia_m-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m,  a+k*wa_m1 ,na,wa,pia,  b,  c+k*wc_m1,nc,wc,pic );
@@ -475,7 +480,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_blas_policy, slicing::small_policy, loop_fusion::all_policy,	
+			execution_policy::parallel_loop_t, slicing_policy::slice_t, fusion_policy::all_t,	
             unsigned const m,
             unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -487,7 +492,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() == hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -531,13 +536,13 @@ inline void ttv(
 		auto va2 = generate_strides(na2,pia2); // same for a and c
 
 
-
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+        // firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t k = 0; k < nn; ++k){
 
-  		set_blas_threads_min();
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);
+            set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);
 		
 		
 			auto ka = at_at_1(k, va2, wa2, pia2);
@@ -552,7 +557,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::threaded_blas_policy, slicing::small_policy, loop_fusion::all_policy,	
+			execution_policy::parallel_blas_t, slicing_policy::slice_t, fusion_policy::all_t,	
             unsigned const m,
             unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -564,7 +569,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() == hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -629,7 +634,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_threaded_blas_policy, slicing::small_policy, loop_fusion::all_policy,	
+			execution_policy::parallel_loop_blas_t, slicing_policy::slice_t, fusion_policy::all_t,	
             unsigned const m,
             unsigned const p,
             double ratio,
@@ -642,7 +647,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() == hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -685,11 +690,11 @@ inline void ttv(
 		//auto const nn = na2.product();
 		auto va2 = generate_strides(na2,pia2); // same for a and c
 
+        const auto ompthreads = unsigned (double(hwthreads)*ratio);
+        const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
 
-    const auto ompthreads = unsigned (double(hwthreads)*ratio);
-    const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
-
-#pragma omp parallel for schedule(dynamic) num_threads(ompthreads) firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+        // firstprivate(p, wc2, wa2,va2,pia2,  na_m,wa_m,na_pia_1, a,b,c)
+        #pragma omp parallel for schedule(static) num_threads(ompthreads) 
 		for(size_t k = 0; k < nn; ++k){
 
   		set_blas_threads(blasthreads);
@@ -721,7 +726,7 @@ inline void ttv(
 */
 template<class value_t, class size_t>
 inline void ttv(
-			execution::sequential_policy, slicing::large_policy, loop_fusion::none_policy,
+			execution_policy::sequential_t, slicing_policy::subtensor_t, fusion_policy::none_t,
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -731,7 +736,7 @@ inline void ttv(
 {
 
 	if(!is_case<8>(p,m,pia)){
-		mtv(execution::seq, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::seq, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -759,7 +764,7 @@ inline void ttv(
 */
 template<class value_t, class size_t>
 inline void ttv(
-			execution::sequential_blas_policy, slicing::large_policy, loop_fusion::none_policy,
+			execution_policy::sequential_blas_t, slicing_policy::subtensor_t, fusion_policy::none_t,
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -771,7 +776,7 @@ inline void ttv(
   set_blas_threads_min();
 
 	if(!is_case<8>(p,m,pia)){
-		mtv(execution::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -800,7 +805,7 @@ inline void ttv(
 //	static void run(
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_policy, slicing::large_policy, loop_fusion::none_policy,	
+			execution_policy::parallel_t, slicing_policy::subtensor_t, fusion_policy::none_t,	
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -812,7 +817,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
     set_blas_threads_max();
     assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
-		mtv(execution::par, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
 		assert(is_case<8>(p,m,pia));
@@ -836,15 +841,14 @@ inline void ttv(
 
 		auto n = compute_ninvpia( na, pia, inv_pia_m ); // this is for the most inner computation
 		assert(n == wa_m);
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+		
+		// firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
 
-  		set_blas_threads_min();
-  		
-  		//std::cout << "OMP-THREADS = " << get_omp_threads() << std::endl;
-  		//std::cout << "BLAS-THREADS = " << get_blas_threads() << std::endl;
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);
+      		set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);
 		
 			multiple_gemv_over_large_tensor_slices
 				( gemv_col<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic );
@@ -860,7 +864,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_blas_policy, slicing::large_policy, loop_fusion::none_policy,
+			execution_policy::parallel_loop_t, slicing_policy::subtensor_t, fusion_policy::none_t,
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -872,7 +876,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
     set_blas_threads_max();
     assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {					
 		assert(m>0);			
@@ -897,12 +901,13 @@ inline void ttv(
 		auto n = compute_ninvpia( na, pia, inv_pia_m ); // this is for the most inner computation
 		assert(n == wa_m);
 
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+        // firstprivate(p,m,n,inv_pia_m,maxp,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
-  		set_blas_threads_min();
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);		
-		
+            set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);		
+
 			multiple_gemv_over_large_tensor_slices 
 				(gemv_col_blas<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic);
 		}
@@ -917,7 +922,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_blas_policy, slicing::large_policy, loop_fusion::all_policy,
+			execution_policy::parallel_loop_t, slicing_policy::subtensor_t, fusion_policy::all_t,
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -928,7 +933,7 @@ inline void ttv(
 	if(!is_case<8>(p,m,pia)){
     set_blas_threads_max();
     assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
 		assert(is_case<8>(p,m,pia));
@@ -952,12 +957,13 @@ inline void ttv(
 		auto const wa_m1 = wa[pia[inv_pia_m  ]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
-		#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+        // firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+		#pragma omp parallel for schedule(static) num_threads(hwthreads) 
 		for(size_t i = 0; i < num; ++i){
 
-  		set_blas_threads_min();
-      assert(get_omp_threads()==hwthreads);
-  		assert(get_blas_threads() == 1);
+            set_blas_threads_min();
+            assert(get_omp_threads()==hwthreads);
+            assert(get_blas_threads() == 1);
 		
 			multiple_gemv_over_large_tensor_slices
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
@@ -968,7 +974,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::threaded_blas_policy, slicing::large_policy, loop_fusion::all_policy,
+			execution_policy::parallel_blas_t, slicing_policy::subtensor_t, fusion_policy::all_t,
             unsigned const m,
             unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -977,9 +983,9 @@ inline void ttv(
 			)
 {	
 	if(!is_case<8>(p,m,pia)){
-    set_blas_threads_max();
-    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+        set_blas_threads_max();
+        assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
 		assert(is_case<8>(p,m,pia));
@@ -1003,10 +1009,8 @@ inline void ttv(
 		auto const wa_m1 = wa[pia[inv_pia_m  ]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
-		//#pragma omp parallel for schedule(dynamic) num_threads(hwthreads) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
-
-    set_blas_threads_max();
-    assert(get_blas_threads() == hwthreads);
+        set_blas_threads_max();
+        assert(get_blas_threads() == hwthreads);
 		
 		for(size_t i = 0; i < num; ++i){
 
@@ -1020,7 +1024,7 @@ inline void ttv(
 
 template<class value_t, class size_t>
 inline void ttv(
-			execution::parallel_threaded_blas_policy, slicing::large_policy, loop_fusion::all_policy,
+			execution_policy::parallel_loop_blas_t, slicing_policy::subtensor_t, fusion_policy::all_t,
             unsigned const m,
             unsigned const p,
             double ratio,
@@ -1030,9 +1034,9 @@ inline void ttv(
 			)
 {	
 	if(!is_case<8>(p,m,pia)){
-    set_blas_threads_max();
-    assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
-		mtv(execution::blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+        set_blas_threads_max();
+        assert(get_blas_threads() > 1 || get_blas_threads() <= hwthreads);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
 		assert(is_case<8>(p,m,pia));
@@ -1058,13 +1062,13 @@ inline void ttv(
 		
 		
 		const auto ompthreads = unsigned (double(hwthreads)*ratio);
-    const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
+        const auto blasthreads = unsigned (double(hwthreads)*(1.0-ratio)); 
 
-
-#pragma omp parallel for schedule(dynamic) num_threads(ompthreads) firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+        // firstprivate(p,m,inv_pia_m,wa_m1,wc_m1,   a,na,wa,pia,  b,c,nc,wc,pic)
+        #pragma omp parallel for schedule(static) num_threads(ompthreads) 
 		for(size_t i = 0; i < num; ++i){
 
-  		set_blas_threads(blasthreads);
+  		    set_blas_threads(blasthreads);
 		
 			multiple_gemv_over_large_tensor_slices
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );

@@ -51,9 +51,9 @@ namespace tlib::ttv
  * \param pic permutations of the indices of array C. Length of the tuple must be p-1. 
  *
 */
-template<class value_t, class size_t, class execution_policy, class slicing_policy, class fusion_policy>
+template<class value_t, class size_t, class execution_t, class slicing_t, class fusion_t>
 inline void tensor_times_vector(
-	execution_policy ep, slicing_policy sp, fusion_policy fp,
+	execution_t ep, slicing_t sp, fusion_t fp,
 	size_t const q, size_t const p,
 	value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 	value_t const*const b, size_t const*const nb,
@@ -96,10 +96,10 @@ inline void tensor_times_vector(
  * \brief Implements a mode-q tensor-times-vector-multiplication
  *
  */
-template<class value_t, class execution_policy, class slicing_policy, class fusion_policy>
+template<class value_t, class execution_t, class slicing_t, class fusion_t>
 inline auto tensor_times_vector(
 	std::size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
-	execution_policy ep, slicing_policy sp, fusion_policy fp)  
+	execution_t ep, slicing_t sp, fusion_t fp)  
 {
     auto c_shape  = detail::generate_output_shape (a.shape() ,q);
     auto c_layout = detail::generate_output_layout(a.layout(),q);
@@ -122,5 +122,6 @@ inline auto tensor_times_vector(
 template<class value_t>
 inline auto operator*(tlib::ttv::tensor_view<value_t> const& a,  tlib::ttv::tensor<value_t> const& b)
 {
-    return tlib::ttv::tensor_times_vector(a.contraction_mode(), a.get_tensor(),  b, tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all) ;
+    return tlib::ttv::tensor_times_vector(a.contraction_mode(), a.get_tensor(), b, 
+                                          tlib::execution_policy::par_loop, tlib::slicing_policy::subtensor, tlib::fusion_policy::all) ;
 }

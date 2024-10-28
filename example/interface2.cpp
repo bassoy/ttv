@@ -39,8 +39,8 @@ int main()
 */
 
   // correct shape, layout and strides of the output tensors C1,C2 are automatically computed and returned by the functions.  
-  auto C1 = tlib::tensor_times_vector(mode, A,B, tlib::execution::seq , tlib::slicing::large, tlib::loop_fusion::none );  
-  auto C2 = tlib::tensor_times_vector(mode, A,B, tlib::execution::blas, tlib::slicing::small, tlib::loop_fusion::all  );
+  auto C1 = tlib::tensor_times_vector(mode, A,B, tlib::execution_policy::seq ,     tlib::slicing_policy::subtensor, tlib::fusion_policy::none );  
+  auto C2 = tlib::tensor_times_vector(mode, A,B, tlib::execution_policy::par_loop, tlib::slicing_policy::slice,     tlib::fusion_policy::all  );
   	
 
   std::cout << "C1 = [ "; std::copy(C1.begin(), C1.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;

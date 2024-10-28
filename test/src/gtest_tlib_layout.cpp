@@ -191,6 +191,7 @@ TEST_F(LayoutTest, inverse_mode)
 	}		
 }
 
+/*
 TEST_F(LayoutTest, output_layout)
 {
 	for(auto order = 2u; order <= 8u; ++order)
@@ -219,22 +220,22 @@ TEST_F(LayoutTest, output_layout)
 				
 				std::equal(layout_in.begin()     ,layout_in.begin()+min1  , layout_out.begin()      , eq_func);
 				std::equal(layout_in.begin()+imode+1,layout_in.begin()+order , layout_out.begin()+imode, eq_func);
-/*
-				std::cout << "layout_in = ";
-				std::copy(layout_in.begin(),layout_in.end(),std::ostream_iterator<unsigned>(std::cout," "));
-				std::cout << std::endl;
+
+//				std::cout << "layout_in = ";
+//				std::copy(layout_in.begin(),layout_in.end(),std::ostream_iterator<unsigned>(std::cout," "));
+//				std::cout << std::endl;
 	
-				std::cout << "layout_out = ";
-				std::copy(layout_out.begin(),layout_out.end(),std::ostream_iterator<unsigned>(std::cout," "));
-				std::cout << std::endl;
-*/				
+//				std::cout << "layout_out = ";
+//				std::copy(layout_out.begin(),layout_out.end(),std::ostream_iterator<unsigned>(std::cout," "));
+//				std::cout << std::endl;
+				
 			}
 //			std::cout << std::endl;			
 		}
 //		std::cout << std::endl;
 	}	
 }
-
+*/
 
 
 

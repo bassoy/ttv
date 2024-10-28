@@ -188,13 +188,13 @@ inline void check_tensor_times_vector(const size_type init, const size_type step
 }
 
 
-TEST(TensorTimesVector, SequentialLargeSlicesNoLoopFusion)
+TEST(TensorTimesVector, SequentialSubtensorNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::sequential_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::sequential_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3);
@@ -202,13 +202,13 @@ TEST(TensorTimesVector, SequentialLargeSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, SequentialBlasLargeSlicesNoLoopFusion)
+TEST(TensorTimesVector, SequentialBlasSubtensorNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::sequential_blas_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::sequential_blas_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3);
@@ -216,13 +216,13 @@ TEST(TensorTimesVector, SequentialBlasLargeSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelLargeSlicesNoLoopFusion)
+TEST(TensorTimesVector, ParallelSubtensorNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::parallel_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -230,13 +230,13 @@ TEST(TensorTimesVector, ParallelLargeSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelBlasLargeSlicesNoLoopFusion)
+TEST(TensorTimesVector, ParallelLoopSubtensorNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_blas_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::parallel_loop_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -244,26 +244,26 @@ TEST(TensorTimesVector, ParallelBlasLargeSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelBlasLargeSlicesCompleteLoopFusion)
+TEST(TensorTimesVector, ParallelLoopSubtensorAll)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_blas_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::all_policy;
+	using execution_policy = tlib::execution_policy::parallel_loop_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::all_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
-TEST(TensorTimesVector, ThreadedBlasLargeSlicesCompleteLoopFusion)
+TEST(TensorTimesVector, ParallelBlasSubtensorAll)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::threaded_blas_policy;
-	using slicing_policy   = tlib::slicing::large_policy;
-	using fusion_policy    = tlib::loop_fusion::all_policy;
+	using execution_policy = tlib::execution_policy::parallel_blas_t;
+	using slicing_policy   = tlib::slicing_policy::subtensor_t;
+	using fusion_policy    = tlib::fusion_policy::all_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -275,26 +275,26 @@ TEST(TensorTimesVector, ThreadedBlasLargeSlicesCompleteLoopFusion)
 
 
 
-TEST(TensorTimesVector, SequentialSmallSlicesNoLoopFusion)
+TEST(TensorTimesVector, SequentialSlicesNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::sequential_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::sequential_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3u);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3u);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2u,3u);
 }
 
-TEST(TensorTimesVector, SequentialBlasSmallSlicesNoLoopFusion)
+TEST(TensorTimesVector, SequentialBlasSlicesNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::sequential_blas_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::sequential_blas_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2u,3u);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2u,3u);
@@ -302,13 +302,13 @@ TEST(TensorTimesVector, SequentialBlasSmallSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelSmallSlicesNoLoopFusion)
+TEST(TensorTimesVector, ParallelSlicesNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::parallel_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -316,13 +316,13 @@ TEST(TensorTimesVector, ParallelSmallSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelBlasSmallSlicesNoLoopFusion)
+TEST(TensorTimesVector, ParallelLoopSlicesNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_blas_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::none_policy;
+	using execution_policy = tlib::execution_policy::parallel_loop_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::none_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -330,13 +330,13 @@ TEST(TensorTimesVector, ParallelBlasSmallSlicesNoLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelBlasSmallSlicesOuterLoopFusion)
+TEST(TensorTimesVector, ParallelLoopSlicesOuter)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_blas_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::outer_policy;
+	using execution_policy = tlib::execution_policy::parallel_loop_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::outer_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
@@ -344,26 +344,26 @@ TEST(TensorTimesVector, ParallelBlasSmallSlicesOuterLoopFusion)
 }
 
 
-TEST(TensorTimesVector, ParallelBlasSmallSlicesCompleteLoopFusion)
+TEST(TensorTimesVector, ParallelLoopSlicesAll)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::parallel_blas_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::all_policy;
+	using execution_policy = tlib::execution_policy::parallel_loop_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::all_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
-TEST(TensorTimesVector, ThreadedBlasSmallSlicesCompleteLoopFusion)
+TEST(TensorTimesVector, ThreadedBlasSlicesAll)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = tlib::execution::threaded_blas_policy;
-	using slicing_policy   = tlib::slicing::small_policy;
-	using fusion_policy    = tlib::loop_fusion::all_policy;
+	using execution_policy = tlib::execution_policy::parallel_blas_t;
+	using slicing_policy   = tlib::slicing_policy::slice_t;
+	using fusion_policy    = tlib::fusion_policy::all_t;
 
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);

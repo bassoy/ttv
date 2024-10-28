@@ -16,7 +16,7 @@
 #include <cblas.h>
 #endif
 
-#ifdef USE_MKLBLAS
+#ifdef USE_MKL
 #include <mkl.h>
 #include <mkl_cblas.h>
 #endif
@@ -186,7 +186,7 @@ inline void gemv_col_blas(
 		size_t const N,
 		size_t const lda)
 {
-#if defined USE_MKLBLAS
+#if defined USE_MKL
     const MKL_INT MM = M;
     const MKL_INT NN = N;
     const MKL_INT LDA = lda;
@@ -199,7 +199,7 @@ inline void gemv_col_blas(
 #endif
 
 				// CblasColMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_MKLBLAS || defined USE_OPENBLAS
+#if defined USE_MKL || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasColMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c), INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
@@ -228,7 +228,7 @@ inline void gemv_row_blas(
 		size_t const N, // na_m
 		size_t const lda) // na_m usually as
 {
-#if defined USE_MKLBLAS
+#if defined USE_MKL
     const MKL_INT MM = M;
     const MKL_INT NN = N;
     const MKL_INT LDA = lda;
@@ -240,7 +240,7 @@ inline void gemv_row_blas(
     const auto INC = size_t(1);
 #endif
 		// CblasRowMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_MKLBLAS || defined USE_OPENBLAS
+#if defined USE_MKL || defined USE_OPENBLAS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasRowMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c),  INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
@@ -304,7 +304,7 @@ inline void mtv(
 
 template<class value_t, class size_t>
 inline void mtv(
-			execution::sequential_policy,
+			execution_policy::sequential_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
@@ -326,7 +326,7 @@ inline void mtv(
 
 template<class value_t, class size_t>
 inline void mtv(
-			execution::parallel_policy,
+			execution_policy::parallel_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
@@ -350,7 +350,7 @@ inline void mtv(
 
 template<class value_t, class size_t>
 inline void mtv(
-			execution::parallel_blas_policy,
+			execution_policy::parallel_blas_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
 			value_t const*const b, size_t const*const /*nb*/,
@@ -372,15 +372,14 @@ inline void mtv(
 
 template<class value_t, class size_t>
 inline void mtv(
-			execution::sequential_blas_policy,
+			execution_policy::sequential_blas_t,
             unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na,     size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-
-  mtv(execution::parallel_blas_policy{}, m, p, a, na, wa, pia, b, nb, c, nc, wc, pic );
+  mtv(execution_policy::par_blas, m, p, a, na, wa, pia, b, nb, c, nc, wc, pic );
 }
 
 

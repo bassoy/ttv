@@ -1,7 +1,7 @@
 CXX :=g++
 # CXX :=clang++
 
-CXX_FLAGS +=-Wextra -Wall -Wpedantic -Ofast -std=c++17 -DUSE_MKLBLAS -fopenmp -DNDEBUG#  -DUSE_MKLBLAS -pthread  -DUSE_MKLBLAS 
+CXX_FLAGS +=-Wextra -Wall -Wpedantic -Ofast -std=c++17 -DUSE_MKL -fopenmp -DNDEBUG#  -DUSE_MKL -pthread  -DUSE_MKL
 # -g -O0 -fprofile-arcs -ftest-coverage -fno-inline 
 
 

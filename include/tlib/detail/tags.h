@@ -18,8 +18,9 @@
 #pragma once
 
 
-namespace tlib::execution
+namespace tlib::execution_policy
 {
+/*
 struct sequential_policy    {};
 struct sequential_blas_policy {};
 struct parallel_policy      {};
@@ -33,28 +34,41 @@ inline constexpr parallel_policy      par;
 inline constexpr parallel_blas_policy blas;
 inline constexpr threaded_blas_policy threaded;
 inline constexpr parallel_threaded_blas_policy parallel_threaded;
+*/
 
+struct sequential_t         {};
+struct sequential_blas_t    {};
+struct parallel_t           {};
+struct parallel_loop_t      {};
+struct parallel_blas_t      {};
+struct parallel_loop_blas_t {};
+
+inline constexpr sequential_t         seq;
+inline constexpr sequential_blas_t    seq_blas;
+inline constexpr parallel_t           par;
+inline constexpr parallel_loop_t      par_loop;
+inline constexpr parallel_blas_t      par_blas;
+inline constexpr parallel_loop_blas_t par_blas_loop;
 }
 
-namespace tlib::slicing
+namespace tlib::slicing_policy
 {
-struct small_policy    {};
-struct large_policy    {};
+struct slice_t      {};
+struct subtensor_t  {};
 
-inline constexpr small_policy    small;
-inline constexpr large_policy    large;
+inline constexpr slice_t     slice;
+inline constexpr subtensor_t subtensor;
 }
 
 
-
-namespace tlib::loop_fusion
+namespace tlib::fusion_policy
 {
-struct none_policy   {};
-struct outer_policy  {};
-struct all_policy    {};
+struct none_t   {};
+struct outer_t  {};
+struct all_t    {};
 
-inline constexpr none_policy    none;
-inline constexpr outer_policy   outer;
-inline constexpr all_policy     all;
+inline constexpr none_t    none;
+inline constexpr outer_t   outer;
+inline constexpr all_t     all;
 
 }

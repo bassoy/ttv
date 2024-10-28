@@ -57,14 +57,14 @@ int main()
 
 
   tlib::tensor_times_vector(
-  	tlib::execution::seq, tlib::slicing::small, tlib::loop_fusion::none,
+  	tlib::execution_policy::seq, tlib::slicing_policy::slice, tlib::fusion_policy::none,
   	q, p,   
   	A .data(), na.data(), wa.data(), pia.data(),    
   	B .data(), nb.data(),   
   	C1.data(), nc.data(), wc.data(), pic.data()  );  	
 
   tlib::tensor_times_vector(
-	tlib::execution::blas, tlib::slicing::large, tlib::loop_fusion::all,
+	tlib::execution_policy::par_loop, tlib::slicing_policy::subtensor, tlib::fusion_policy::all,
   	q, p,   
   	A .data(), na.data(), wa.data(), pia.data(),    
   	B .data(), nb.data(),   
