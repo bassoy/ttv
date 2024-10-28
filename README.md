@@ -57,7 +57,7 @@ The comparison includes three state-of-the-art libraries that implement three di
 The experiments have been carried out with asymmetrically-shaped and symmetrically-shaped tensors in order to provide a comprehensive test coverage where
 the tensor elements are stored according to the first-order storage format.
 The tensor order of the asymmetrically- and symmetrically-shaped tensors have been varied from `2` to `10` and `2` to `7`, respectively.
-The contraction mode `q` has also been varied from `1` to the tensor order.
+The contraction mode `q` has also been varied from `1` to the tensor order `p`.
 
 ### Symmetrically-Shaped Tensors
 

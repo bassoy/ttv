@@ -66,6 +66,8 @@ inline unsigned get_blas_threads()
     return openblas_get_num_threads();
 #elif defined USE_MKLBLAS
     return mkl_get_max_threads();
+#else
+    return 1;
 #endif
 }
 

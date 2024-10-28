@@ -114,7 +114,7 @@ inline void compute_inverse_layout(InputIt begin, InputIt end, OutputIt output)
 template<class InputIt, class SizeType>
 inline auto inverse_mode(InputIt layout_begin, InputIt layout_end, SizeType mode )
 {		
-	using value_type = typename std::iterator_traits<InputIt>::value_type;
+  using value_type = typename std::iterator_traits<InputIt>::value_type;
 	if(!is_valid_layout(layout_begin,layout_end))
 		throw std::runtime_error("Error in tlib::detail::inverse_mode(): input layout is not valid.");
 				
@@ -124,13 +124,13 @@ inline auto inverse_mode(InputIt layout_begin, InputIt layout_end, SizeType mode
 		
 	auto const p = static_cast<value_type>(p_);
 	
-	if(mode==0u || mode > p)
-		throw std::runtime_error("Error in tlib::detail::inverse_mode(): mode should be one-based and equal to or less than layout size.");
+  if(mode==0u || mode > SizeType(p))
+    throw std::runtime_error("Error in tlib::detail::inverse_mode(): mode should be one-based and equal to or less than layout size.");
 	
 	auto inverse_mode = value_type{0u};
 	for(; inverse_mode < p; ++inverse_mode)
-		if(layout_begin[inverse_mode] == mode)
-			break;
+    if(layout_begin[inverse_mode] == value_type(mode))
+      break;
 			
 	assert(inverse_mode < p);
 	
