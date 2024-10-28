@@ -4,7 +4,6 @@ High-Performance Tensor-Vector Multiplication Library (TTV)
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/bassoy/ttv/blob/master/LICENSE)
 [![Wiki](https://img.shields.io/badge/ttv-wiki-blue.svg)](https://github.com/bassoy/ttv/wiki)
 [![Discussions](https://img.shields.io/badge/ttv-discussions-blue.svg)](https://github.com/bassoy/ttv/discussions)
-[![Build Status](https://travis-ci.org/bassoy/ttv.svg?branch=master)](https://travis-ci.org/bassoy/ttv)
 [![Build Status](https://github.com/bassoy/ttv/actions/workflows/test.yml/badge.svg)](https://github.com/bassoy/ttv/actions)
 
 ## Summary
