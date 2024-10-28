@@ -35,21 +35,21 @@ jobs:
 
     - name: Build and Run Tests (Intel MKL)
       run: |
-        cd ttm/test
+        cd ttv/test
         make clean && make -j BLAS_FLAG=MKL
         ./bin/main
 
     - name: Build and Run Tests (OpenBLAS)
       run: |
-        cd ttm/test
+        cd ttv/test
         make clean && make -j BLAS_FLAG=OPENBLAS
         ./bin/main
         
     - name: Build and Run Python Wrapper Tests (OpenBLAS)
       run: |
-        cd ttm/ttmpy
-        virtualenv ~/env-ttm
-        source ~/env-ttm/bin/activate
+        cd ttv/ttvpy
+        virtualenv ~/env-ttv
+        source ~/env-ttv/bin/activate
         pip install -e .
         cd tests
         python3 -m unittest discover -v
