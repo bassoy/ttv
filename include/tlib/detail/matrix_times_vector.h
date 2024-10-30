@@ -21,6 +21,11 @@
 #include <mkl_cblas.h>
 #endif
 
+#ifdef USE_BLIS
+#include <blis.h>
+#include <cblas.h>
+#endif
+
 
 namespace tlib::ttv::detail {
 
@@ -299,23 +304,19 @@ inline auto compute_nfull(size_t const*const na, unsigned p)
 
 
 template<class value_t, class size_t, class execution_policy>
-inline void mtv(
-			execution_policy,
-            unsigned const m, unsigned const p,
-			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
-			value_t const*const b, size_t const*const /*nb*/,
-			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
-			);
+inline void mtv(execution_policy,
+                unsigned const m, unsigned const p,
+		value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
+		value_t const*const b, size_t const*const /*nb*/,
+		value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/ );
 
 
 template<class value_t, class size_t>
-inline void mtv(
-			execution_policy::sequential_t,
-            unsigned const m, unsigned const p,
-			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
-			value_t const*const b, size_t const*const /*nb*/,
-			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
-			)
+inline void mtv(execution_policy::sequential_t,
+                unsigned const m, unsigned const p,
+                value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
+                value_t const*const b, size_t const*const /*nb*/,
+                value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/ )
 {
 	auto n = compute_nfull(na,p) / na[m-1];
 	
@@ -331,13 +332,11 @@ inline void mtv(
 
 
 template<class value_t, class size_t>
-inline void mtv(
-			execution_policy::parallel_t,
-            unsigned const m, unsigned const p,
-			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
-			value_t const*const b, size_t const*const /*nb*/,
-			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
-			)
+inline void mtv(execution_policy::parallel_t,
+                unsigned const m, unsigned const p,
+		value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
+		value_t const*const b, size_t const*const /*nb*/,
+		value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/ )
 {
 	
 	auto n = compute_nfull(na,p) / na[m-1];
@@ -355,13 +354,11 @@ inline void mtv(
 
 
 template<class value_t, class size_t>
-inline void mtv(
-			execution_policy::parallel_blas_t,
-            unsigned const m, unsigned const p,
-			value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
-			value_t const*const b, size_t const*const /*nb*/,
-			value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/
-			)
+inline void mtv(execution_policy::parallel_blas_t,
+                unsigned const m, unsigned const p,
+		value_t const*const a, size_t const*const na,     size_t const*const /*wa*/, size_t const*const pia,
+		value_t const*const b, size_t const*const /*nb*/,
+		value_t      *const c, size_t const*const /*nc*/, size_t const*const /*wc*/, size_t const*const /*pic*/ )
 {
 
 	auto n = compute_nfull(na,p) / na[m-1];
