@@ -24,6 +24,7 @@
 
 namespace tlib::ttv::detail {
 
+static inline unsigned get_number_cores();
 
 /** \brief computes 2d-slice-times-vector
  *
@@ -72,7 +73,8 @@ void gemv_row_parallel(
 		size_t const N,
 		size_t const lda)
 {
-    #pragma omp parallel for schedule(static)
+    static const unsigned cores = get_number_cores();
+    #pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
     for(unsigned i = 0; i < M; ++i){
         auto const*const __restrict ai = a+i*lda;
         auto sum = value_t{};
@@ -134,10 +136,12 @@ void gemv_col_parallel(
     constexpr auto MB = 32;
     const unsigned m = M/MB;
     const unsigned MBmod = M%MB;
+    
+    static const unsigned cores = get_number_cores();
 
-    #pragma omp parallel firstprivate(a,b,c, MB, m, MBmod, N, lda, M)
+    #pragma omp parallel num_threads(cores) proc_bind(spread)
     {
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(static) 
         for(unsigned k = 0; k < m; ++k){
             auto const*const __restrict ak = a+k*MB;
             auto      *const __restrict ck = c+k*MB;
@@ -275,8 +279,10 @@ inline void dot_parallel(
 	value_t      *const __restrict c,
 	size_t const M) // nn
 {
+    static const unsigned cores = get_number_cores();
+    
 	auto sum = value_t{};
-	#pragma omp parallel for schedule(static) reduction (+:sum)
+	#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread) reduction (+:sum)
 	for(auto k = 0ul; k < M; ++k){
 		sum += a[k] * b[k];
 	}
