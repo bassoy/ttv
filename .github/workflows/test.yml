@@ -18,15 +18,20 @@ jobs:
       run: |
         sudo apt update && sudo apt install -y g++ libomp-dev libopenblas-dev libmkl-dev intel-mkl python3-pip python3-virtualenv
         
+#    - name: Clone and install AOCL
+#      run: |
+#        git clone https://github.com/amd/blis
+#        cd blis
+#        ./configure --enable-cblas --blas-int-size=64 --enable-threading=openmp --enable-shared generic
+#        make -j && sudo make install && make check -j
+        
     - name: Install Gtest
       run: |
         git clone https://github.com/google/googletest.git
         cd googletest
-        mkdir build
-        cd build
+        mkdir build && cd build
         cmake .. -DBUILD_GMOCK=OFF
-        make -j
-        sudo make install
+        make -j && sudo make install
       
     - name: Git Clone TTV Repo
       run: |
@@ -44,6 +49,12 @@ jobs:
         cd ttv/test
         make clean && make -j BLAS_FLAG=OPENBLAS
         ./bin/main
+
+#    - name: Build and Run Tests (BLIS)
+#      run: |
+#        cd ttv/test
+#        make clean && make -j BLAS_FLAG=BLIS
+#        ./bin/main
         
     - name: Build and Run Python Wrapper Tests (OpenBLAS)
       run: |
