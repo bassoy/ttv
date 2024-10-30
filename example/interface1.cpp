@@ -13,7 +13,7 @@ g++ -I../include/ -std=c++17 -Ofast -fopenmp interface1.cpp -o interface1 && ./i
 int main()
 {
   using value_t    = float;
-  using tensor_t   = tlib::tensor<value_t>;     // or std::array<value_t,N>
+  using tensor_t   = tlib::ttv::tensor<value_t>;     // or std::array<value_t,N>
   using iterator_t = std::ostream_iterator<value_t>;
   
   auto mode = 2ul;

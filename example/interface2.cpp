@@ -13,7 +13,7 @@ g++ -I../include/ -std=c++17 -Ofast -fopenmp interface2.cpp -o interface2 && ./i
 int main()
 {
   using value_t    = float;
-  using tensor_t   = tlib::tensor<value_t>;     // or std::array<value_t,N>
+  using tensor_t   = tlib::ttv::tensor<value_t>;     // or std::array<value_t,N>
   using iterator_t = std::ostream_iterator<value_t>;
   
   auto mode = 2ul;
@@ -39,8 +39,8 @@ int main()
 */
 
   // correct shape, layout and strides of the output tensors C1,C2 are automatically computed and returned by the functions.  
-  auto C1 = tlib::tensor_times_vector(mode, A,B, tlib::execution_policy::seq ,     tlib::slicing_policy::subtensor, tlib::fusion_policy::none );  
-  auto C2 = tlib::tensor_times_vector(mode, A,B, tlib::execution_policy::par_loop, tlib::slicing_policy::slice,     tlib::fusion_policy::all  );
+  auto C1 = tlib::ttv::tensor_times_vector(mode, A,B, tlib::execution_policy::seq ,     tlib::slicing_policy::subtensor, tlib::fusion_policy::none );  
+  auto C2 = tlib::ttv::tensor_times_vector(mode, A,B, tlib::execution_policy::par_loop, tlib::slicing_policy::slice,     tlib::fusion_policy::all  );
   	
 
   std::cout << "C1 = [ "; std::copy(C1.begin(), C1.end(), iterator_t(std::cout, " ")); std::cout << " ];" << std::endl;

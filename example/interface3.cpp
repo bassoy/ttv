@@ -21,14 +21,14 @@ int main()
   auto na = vector_t{4,3,2};  // input shape tuple
   auto p = na.size(); // order of input tensor, i.e. number of dimensions - here 3
   auto k = 1ul;         // k-order of input tensor
-  auto pia = tlib::detail::generate_k_order_layout(p,k);  //  layout tuple of input tensor - here {1,2,3};
-  auto wa = tlib::detail::generate_strides(na,pia);       //  stride tuple of input tensor - here {1,4,12}; 
+  auto pia = tlib::ttv::detail::generate_k_order_layout(p,k);  //  layout tuple of input tensor - here {1,2,3};
+  auto wa = tlib::ttv::detail::generate_strides(na,pia);       //  stride tuple of input tensor - here {1,4,12}; 
   auto nn = std::accumulate(na.begin(),na.end(),1ul,std::multiplies<>()); // number of elements of input tensor
 
   
   auto q = 2ul; // contraction mode - here 2.
   auto nb = vector_t{na[q-1]};
-  auto nc = tlib::detail::generate_output_shape(na,q); //  output shape tuple here {4,2};
+  auto nc = tlib::ttv::detail::generate_output_shape(na,q); //  output shape tuple here {4,2};
 
 
   auto A  = tensor_t(nn       ,0.0f); // tensor A is a std::vector<value_t> of length nn initialized with 0
@@ -37,8 +37,8 @@ int main()
   auto C2 = tensor_t(nn/nb[0] ,0.0f);
 
 
-  auto pic = tlib::detail::generate_output_layout (pia,q); //  output layout is computed according to input layout and contraction mode - here {1,2};   
-  auto wc  = tlib::detail::generate_strides(nc,pic);  //  output strides is computed according to output shape and output layout - here {1,4};    
+  auto pic = tlib::ttv::detail::generate_output_layout (pia,q); //  output layout is computed according to input layout and contraction mode - here {1,2};   
+  auto wc  = tlib::ttv::detail::generate_strides(nc,pic);  //  output strides is computed according to output shape and output layout - here {1,4};    
 
   std::iota(A.begin(),A.end(),value_t{1});
   
@@ -56,14 +56,14 @@ int main()
 */
 
 
-  tlib::tensor_times_vector(
+  tlib::ttv::tensor_times_vector(
   	tlib::execution_policy::seq, tlib::slicing_policy::slice, tlib::fusion_policy::none,
   	q, p,   
   	A .data(), na.data(), wa.data(), pia.data(),    
   	B .data(), nb.data(),   
   	C1.data(), nc.data(), wc.data(), pic.data()  );  	
 
-  tlib::tensor_times_vector(
+  tlib::ttv::tensor_times_vector(
 	tlib::execution_policy::par_loop, tlib::slicing_policy::subtensor, tlib::fusion_policy::all,
   	q, p,   
   	A .data(), na.data(), wa.data(), pia.data(),    
