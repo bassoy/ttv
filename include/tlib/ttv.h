@@ -52,7 +52,7 @@ namespace tlib::ttv
  *
 */
 template<class value_t, class size_t, class execution_t, class slicing_t, class fusion_t>
-inline void tensor_times_vector(
+inline void ttv(
 	execution_t ep, slicing_t sp, fusion_t fp,
 	size_t const q, size_t const p,
 	value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
@@ -97,7 +97,7 @@ inline void tensor_times_vector(
  *
  */
 template<class value_t, class execution_t, class slicing_t, class fusion_t>
-inline auto tensor_times_vector(
+inline auto ttv(
 	std::size_t q, tensor<value_t> const& a,  tensor<value_t> const& b, 
 	execution_t ep, slicing_t sp, fusion_t fp)  
 {
@@ -105,7 +105,7 @@ inline auto tensor_times_vector(
     auto c_layout = detail::generate_output_layout(a.layout(),q);
 	auto c        = tensor<value_t>( c_shape, c_layout  );
 
-	tensor_times_vector( ep, sp, fp, q, a.order(), 
+    ttv( ep, sp, fp, q, a.order(),
 		a.data().data(), a.shape().data(), a.strides().data(), a.layout().data(),
 		b.data().data(), b.shape().data(),
 		c.data().data(), c.shape().data(), c.strides().data(), c.layout().data());
@@ -122,6 +122,6 @@ inline auto tensor_times_vector(
 template<class value_t>
 inline auto operator*(tlib::ttv::tensor_view<value_t> const& a,  tlib::ttv::tensor<value_t> const& b)
 {
-    return tlib::ttv::tensor_times_vector(a.contraction_mode(), a.get_tensor(), b, 
-                                          tlib::execution_policy::par_loop, tlib::slicing_policy::subtensor, tlib::fusion_policy::all) ;
+    return tlib::ttv::ttv(a.contraction_mode(), a.get_tensor(), b,
+              tlib::ttv::execution_policy::par_loop, tlib::ttv::slicing_policy::subtensor, tlib::ttv::fusion_policy::all) ;
 }

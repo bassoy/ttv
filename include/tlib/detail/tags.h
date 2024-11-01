@@ -18,23 +18,8 @@
 #pragma once
 
 
-namespace tlib::execution_policy
+namespace tlib::ttv::execution_policy
 {
-/*
-struct sequential_policy    {};
-struct sequential_blas_policy {};
-struct parallel_policy      {};
-struct parallel_blas_policy {};
-struct threaded_blas_policy {};
-struct parallel_threaded_blas_policy{};
-
-inline constexpr sequential_policy    seq;
-inline constexpr sequential_blas_policy    seq_blas;
-inline constexpr parallel_policy      par;
-inline constexpr parallel_blas_policy blas;
-inline constexpr threaded_blas_policy threaded;
-inline constexpr parallel_threaded_blas_policy parallel_threaded;
-*/
 
 struct sequential_t         {};
 struct sequential_blas_t    {};
@@ -51,7 +36,7 @@ inline constexpr parallel_blas_t      par_blas;
 inline constexpr parallel_loop_blas_t par_blas_loop;
 }
 
-namespace tlib::slicing_policy
+namespace tlib::ttv::slicing_policy
 {
 struct slice_t      {};
 struct subtensor_t  {};
@@ -61,7 +46,7 @@ inline constexpr subtensor_t subtensor;
 }
 
 
-namespace tlib::fusion_policy
+namespace tlib::ttv::fusion_policy
 {
 struct none_t   {};
 struct outer_t  {};

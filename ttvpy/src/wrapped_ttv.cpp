@@ -15,7 +15,6 @@
 
 namespace py = pybind11;
 
-
 template<class T>
 py::array_t<T> 
 ttv(std::size_t const contraction_mode,
@@ -51,9 +50,9 @@ ttv(std::size_t const contraction_mode,
     //auto const nnb = binfo.size;
     //auto const pb  = binfo.ndim;
   
-    auto const nc  = tlib::ttv::detail::generate_output_shape (na ,q);
-    auto const pic = tlib::ttv::detail::generate_output_layout(pia,q);	
-    auto       wc  = tlib::ttv::detail::generate_strides(nc,pic);	
+    auto const nc  = detail::generate_output_shape (na ,q);
+    auto const pic = detail::generate_output_layout(pia,q);	
+    auto       wc  = detail::generate_strides(nc,pic);	
 
     auto       nc_ = std::vector<py::ssize_t>(nc.begin(),nc.end());
     auto       wc_ = std::vector<py::ssize_t>(wc.begin(),wc.end());
@@ -68,11 +67,11 @@ ttv(std::size_t const contraction_mode,
     std::fill(cptr, cptr+nnc,T{});
   
 #ifndef _OPENMP
-    tensor_times_vector<T>(tlib::execution_policy::seq,       tlib::slicing_policy::subtensor, tlib::fusion_policy::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+    ttv<T>(execution_policy::seq,       slicing_policy::subtensor, fusion_policy::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
 #elif defined(USE_OPENBLAS) || defined(USE_MKL)
-    tensor_times_vector<T>(tlib::execution_policy::par_loop,  tlib::slicing_policy::subtensor, tlib::fusion_policy::all , q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+    ttv<T>(execution_policy::par_loop,  slicing_policy::subtensor, fusion_policy::all , q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
 #else 
-    tensor_times_vector<T>(tlib::execution_policy::par,       tlib::slicing_policy::subtensor, tlib::fusion_policy::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
+    ttv<T>(execution_policy::par,       slicing_policy::subtensor, fusion_policy::none, q, p, aptr, na.data(), wa.data(), pia.data(),  bptr, nb.data(),  cptr, nc.data(), wc.data(), pic.data());
 #endif
 
   return c;  
