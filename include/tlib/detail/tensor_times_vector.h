@@ -583,10 +583,9 @@ inline void ttv(
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
         set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -627,7 +626,7 @@ inline void ttv(
 
 		for(size_t k = 0; k < nn; ++k){
             set_blas_threads_max();
-            assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+            assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 			auto ka = at_at_1(k, va2, wa2, pia2);
 			auto kc = at_at_1(k, va2, wc2, pia2);
 			auto const*const ap = a + ka;
@@ -967,10 +966,9 @@ inline void ttv(
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();	
 	if(!is_case<8>(p,m,pia)){
         set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
@@ -996,7 +994,7 @@ inline void ttv(
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
         set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		
 		for(size_t i = 0; i < num; ++i){
 			multiple_gemv_over_large_tensor_slices

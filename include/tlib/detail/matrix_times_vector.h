@@ -79,7 +79,7 @@ void gemv_row_parallel(
 		size_t const lda)
 {
     static const unsigned cores = get_number_cores();
-    #pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
+#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
     for(unsigned i = 0; i < M; ++i){
         auto const*const __restrict ai = a+i*lda;
         auto sum = value_t{};
