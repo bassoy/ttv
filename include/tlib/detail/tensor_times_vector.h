@@ -147,7 +147,7 @@ inline void set_omp_nested()
 template<class size_t>
 inline unsigned compute_inverse_pia_m(size_t const*const pia, size_t const*const pic,  unsigned const p, unsigned const m)
 {
-    unsigned k = 0u;
+  unsigned k = 0u;
 	for(; k<p; ++k)
 		if(pia[k] == m)
 			break;
@@ -179,20 +179,22 @@ inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, unsig
 	return nn;
 }
 
-/* @brief Recursively executes gemv over small tensor slices
+
+
+/* @brief Recursively executes gemv over tensor slices
  * 
  * @note is applied in tensor-times-vector which uses small tensor slices
  * @note gemv_t should be a general matrix-times-vector function for matrices of column-major format
 */
 template<class value_t, class size_t, class gemv_t>
-inline void multiple_gemv_over_small_tensor_slices (
+inline void loops_over_gemv_slices (
 		gemv_t && gemv,
-        unsigned const r, // starts with p
-        unsigned const q, // starts with p-1
+    unsigned const r, // starts with p
+    unsigned const q, // starts with p-1
 		size_t const na_pia_1,
 		size_t const na_m,
 		size_t const wa_m,
-        unsigned const inv_pia_m, // one-based.
+    unsigned const inv_pia_m, // one-based.
 		value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 		value_t const*const __restrict b,
 		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -201,12 +203,12 @@ inline void multiple_gemv_over_small_tensor_slices (
 	if(r>1){
 		if (inv_pia_m == r) { // m == pia[p]
 			//const auto qq = inv_pia_m == r ? q : q-1;
-			multiple_gemv_over_small_tensor_slices(gemv, r-1,q, na_pia_1,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
+			loops_over_gemv_slices(std::forward<gemv_t>(gemv), r-1,q, na_pia_1,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
 		}
 		else{ //  inv_pia_m < r  --- m < pia[r]
-            assert(q > 0u);
+      assert(q > 0u);
 			for(unsigned i = 0; i < na[pia[r-1]-1]; ++i) // , a+=wa[pia[r-1]-1], c+=wc[pic[q-1]-1]
-				multiple_gemv_over_small_tensor_slices(gemv,r-1,q-1, na_pia_1,na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
+				loops_over_gemv_slices(std::forward<gemv_t>(gemv),r-1,q-1, na_pia_1,na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
 		}
 	}
 	else {
@@ -214,16 +216,52 @@ inline void multiple_gemv_over_small_tensor_slices (
 	}
 }
 
-
-
-/* @brief Recursively executes gemv over large tensor slices
+/* @brief Recursively executes gemv over small tensor slices
  * 
- * @note is applied in tensor-times-vector which uses large tensor slices
+ * @note is applied in tensor-times-vector which uses small tensor slices
+ * @note gemv_t should be a general matrix-times-vector function for matrices of column-major format
+*/
+template<class value_t, class size_t>
+inline void task_loops_over_gemv_slices (
+    unsigned const r, // starts with p
+    unsigned const q, // starts with p-1
+		size_t const na_pia_1,
+		size_t const na_m,
+		size_t const wa_m,
+    unsigned const inv_pia_m, // one-based.
+		value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+		value_t const*const __restrict b,
+		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+		)
+{
+	if(r>1){
+#pragma omp task untied
+    {
+		  if (inv_pia_m == r) { // m == pia[p]
+			  //const auto qq = inv_pia_m == r ? q : q-1;
+			  task_loops_over_gemv_slices(r-1,q, na_pia_1,na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
+		  }
+		  else{ //  inv_pia_m < r  --- m < pia[r]		
+          assert(q > 0u);
+			    for(unsigned i = 0; i < na[pia[r-1]-1]; ++i) // , a+=wa[pia[r-1]-1], c+=wc[pic[q-1]-1]
+				    task_loops_over_gemv_slices(r-1,q-1, na_pia_1,na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
+      }
+		}
+	}
+	else {
+		gemv_col_blas( a,b,c, na_pia_1, na_m, wa_m  );
+	}
+}
+
+
+/* @brief Recursively executes gemv over subtensors
+ * 
+ * @note is applied in tensor-times-vector which uses subtensors
  * @note gemv_t should be a general matrix-times-vector function for matrices of column-major format
  * @note pia_1[m]!=1 i.e. pia[1]!=m must hold!
 */
 template<class value_t, class size_t, class gemv_t>
-inline void multiple_gemv_over_large_tensor_slices (
+inline void loops_over_gemv_subtensors (
 		gemv_t && gemv, // should be gemv_col type
         unsigned const r, // starts with p-1
         unsigned const q, // starts with p-1
@@ -236,20 +274,60 @@ inline void multiple_gemv_over_large_tensor_slices (
 		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 		)
 {
-    assert(nn > 1ul);
-    assert(inv_pia_m != 1u);
+  assert(nn > 1ul);
+  assert(inv_pia_m != 1u);
 	if(r>0){
 		if (inv_pia_m >= r) {
-			multiple_gemv_over_large_tensor_slices  (gemv,r-1,q-1,nn,  na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
+			loops_over_gemv_subtensors  (std::forward<gemv_t>(gemv),r-1,q-1,nn,  na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
 		}
-		else if (inv_pia_m < r){
-            assert(q > 0u);
+		  else if (inv_pia_m < r){
+      assert(q > 0u);
 			for(size_t i = 0; i < na[pia[r-1]-1]; ++i)
-				multiple_gemv_over_large_tensor_slices (gemv,r-1,q-1,nn,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
+				loops_over_gemv_subtensors (std::forward<gemv_t>(gemv),r-1,q-1,nn,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
 		}
 	}
 	else {
 		gemv(  a,b,c, nn, na_m, wa_m );
+	}
+}
+
+
+/* @brief Recursively executes gemv over subtensors
+ * 
+ * @note is applied in tensor-times-vector which uses subtensors
+ * @note gemv_t should be a general matrix-times-vector function for matrices of column-major format
+ * @note pia_1[m]!=1 i.e. pia[1]!=m must hold!
+*/
+template<class value_t, class size_t>
+inline void task_loops_over_gemv_subtensors (
+    unsigned const r, // starts with p-1
+    unsigned const q, // starts with p-1
+		size_t const nn, // number of column elements of the matrix
+		size_t const na_m, // number of row elements of the matrix
+		size_t const wa_m,
+    unsigned const inv_pia_m, // one-based.
+		value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+		value_t const*const __restrict b,
+		value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+		)
+{
+  assert(nn > 1ul);
+  assert(inv_pia_m != 1u);
+	if(r>0){
+#pragma omp task untied
+    {
+		  if (inv_pia_m >= r) {
+			  task_loops_over_gemv_subtensors  (r-1,q-1,nn,  na_m,wa_m,inv_pia_m,   a,na,wa,pia,  b,  c,nc,wc,pic);
+		  }
+		  else if (inv_pia_m < r){
+    		assert(q > 0u);
+			  for(size_t i = 0; i < na[pia[r-1]-1]; ++i)
+				  task_loops_over_gemv_subtensors (r-1,q-1,nn,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[r-1]-1],na,wa,pia,  b,  c+i*wc[pic[q-1]-1],nc,wc,pic);
+      }
+		}
+	}
+	else {
+		gemv_col_blas(a,b,c, nn, na_m, wa_m );
 	}
 }
 
@@ -300,7 +378,7 @@ inline void ttv(
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 		size_t const na_pia_1 = na[pia[0]-1];
 
-		multiple_gemv_over_small_tensor_slices(
+		loops_over_gemv_slices(
 			gemv_col<value_t,size_t>, p, p-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
 	}
 }
@@ -313,14 +391,14 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::sequential_blas_t, slicing_policy::slice_t, fusion_policy::none_t,
-            unsigned const m, unsigned const p,
+      unsigned const m, unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    set_blas_threads_min();
-    assert(get_blas_threads() == 1);
+  set_blas_threads_min();
+  assert(get_blas_threads() == 1);
   
 	if(!is_case<8>(p,m,pia)){
 		 mtv(execution_policy::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
@@ -329,8 +407,42 @@ inline void ttv(
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 		size_t const na_pia_1 = na[pia[0]-1];
 
-		multiple_gemv_over_small_tensor_slices(
+		loops_over_gemv_slices(
 			gemv_col_blas<value_t,size_t>, p, p-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+	}
+}
+
+
+/*
+ *
+ *
+*/
+template<class value_t, class size_t>
+inline void ttv(
+			execution_policy::parallel_task_loop_t, slicing_policy::slice_t, fusion_policy::none_t,
+            unsigned const m, unsigned const p,
+			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const b, size_t const*const nb,
+			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+  static const unsigned cores = get_number_cores();
+	if(!is_case<8>(p,m,pia)){
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {
+		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+		size_t const na_pia_1 = na[pia[0]-1];
+
+#pragma omp parallel num_threads(cores) 
+    {
+#pragma omp single
+      {
+		    task_loops_over_gemv_slices(p, p-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+		  }
+		}
 	}
 }
 
@@ -343,14 +455,14 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_t, slicing_policy::slice_t, fusion_policy::none_t,		
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    set_omp_nested(); 
+  set_omp_nested(); 
 
 	if(!is_case<8>(p,m,pia)) {
 		mtv(execution_policy::par,m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
@@ -378,10 +490,9 @@ inline void ttv(
 		static const unsigned cores = get_number_cores();
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t i = 0; i < na[pia_p-1]; ++i){
-            set_blas_threads_min();
-            assert(get_blas_threads()==1);
-			
-			multiple_gemv_over_small_tensor_slices(
+      set_blas_threads_min();
+      assert(get_blas_threads()==1);
+			loops_over_gemv_slices(
 				gemv_col<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, 
 				a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
 		}
@@ -398,8 +509,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_loop_t, slicing_policy::slice_t, fusion_policy::none_t,	
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -407,8 +518,8 @@ inline void ttv(
 {
     static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -436,10 +547,10 @@ inline void ttv(
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t i = 0; i < na[pia_p-1]; ++i){
 		
-            set_blas_threads_min();
-            assert(get_blas_threads() == 1);
+      set_blas_threads_min();
+      assert(get_blas_threads() == 1);
 		
-			multiple_gemv_over_small_tensor_slices(
+			loops_over_gemv_slices(
 				gemv_col_blas<value_t,size_t>, p-1, p-2, na_pia_1, na[m-1], wa[m-1], inv_pia_m, a+i*wa_pia_p, na, wa, pia, b,  c+i*wc_pic_p, nc, wc, pic);
 		}
 
@@ -453,8 +564,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_loop_t, slicing_policy::slice_t, fusion_policy::outer_t,	
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -467,7 +578,7 @@ inline void ttv(
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-	    set_omp_nested(); 
+    set_omp_nested(); 
 		assert(is_case<8>(p,m,pia));
 		
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );				
@@ -492,10 +603,10 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t k = 0u; k < num; ++k){
-            set_blas_threads_min();
-            assert(get_blas_threads()==1);
+      set_blas_threads_min();
+      assert(get_blas_threads()==1);
 
-			multiple_gemv_over_small_tensor_slices
+			loops_over_gemv_slices
 				( gemv_col_blas<value_t,size_t>, inv_pia_m-1, inv_pia_m-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m,  a+k*wa_m1 ,na,wa,pia,  b,  c+k*wc_m1,nc,wc,pic );
 		}
 	}
@@ -515,12 +626,12 @@ inline void ttv(
 {
     static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-	    set_omp_nested(); 
+    set_omp_nested(); 
 		assert(is_case<8>(p,m,pia));
 		assert(m > 0);
 		assert(p>2);
@@ -560,8 +671,8 @@ inline void ttv(
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t k = 0; k < nn; ++k){
 
-            set_blas_threads_min();
-            assert(get_blas_threads()==1);
+      set_blas_threads_min();
+      assert(get_blas_threads()==1);
 		
 			auto ka = at_at_1(k, va2, wa2, pia2);
 			auto kc = at_at_1(k, va2, wc2, pia2);
@@ -584,8 +695,8 @@ inline void ttv(
 			)
 {
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -625,8 +736,8 @@ inline void ttv(
 		auto va2 = generate_strides(na2,pia2); // same for a and c
 
 		for(size_t k = 0; k < nn; ++k){
-            set_blas_threads_max();
-            assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
+      set_blas_threads_max();
+      assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 			auto ka = at_at_1(k, va2, wa2, pia2);
 			auto kc = at_at_1(k, va2, wc2, pia2);
 			auto const*const ap = a + ka;
@@ -645,22 +756,22 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_loop_blas_t, slicing_policy::slice_t, fusion_policy::all_t,	
-            unsigned const m,
-            unsigned const p,
-            double ratio,
+      unsigned const m,
+      unsigned const p,
+      double ratio,
 			value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const b, size_t const*const nb,
 			value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();
+  static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
 		set_blas_threads_max();
 		assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-    	set_omp_nested();
+    set_omp_nested();
 		assert(is_case<8>(p,m,pia));
 		assert(m > 0);
 		assert(p>2);
@@ -697,14 +808,14 @@ inline void ttv(
 		//auto const nn = na2.product();
 		auto va2 = generate_strides(na2,pia2); // same for a and c
 
-        const auto ompthreads = unsigned (double(cores)*ratio);
-        const auto blasthreads = unsigned (double(cores)*(1.0-ratio)); 
+    const auto ompthreads = unsigned (double(cores)*ratio);
+    const auto blasthreads = unsigned (double(cores)*(1.0-ratio)); 
 
-        #pragma omp parallel for schedule(static) num_threads(ompthreads) proc_bind(spread)
+    #pragma omp parallel for schedule(static) num_threads(ompthreads) proc_bind(spread)
 		for(size_t k = 0; k < nn; ++k){
 
-            set_blas_threads(blasthreads);
-            assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+      set_blas_threads(blasthreads);
+      assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		
 			auto ka = at_at_1(k, va2, wa2, pia2);
 			auto kc = at_at_1(k, va2, wc2, pia2);
@@ -734,8 +845,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::sequential_t, slicing_policy::subtensor_t, fusion_policy::none_t,
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -755,7 +866,7 @@ inline void ttv(
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
 		auto const n = compute_ninvpia( na, pia, inv_pia_m );
 		assert(n == wa_m);
-		multiple_gemv_over_large_tensor_slices( gemv_col<value_t,size_t>, p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+		loops_over_gemv_subtensors( gemv_col<value_t,size_t>, p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
 	}
 }
 
@@ -771,15 +882,15 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::sequential_blas_t, slicing_policy::subtensor_t, fusion_policy::none_t,
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
 
-    set_blas_threads_min();
+  set_blas_threads_min();
 
 	if(!is_case<8>(p,m,pia)){
 		mtv(execution_policy::seq_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
@@ -795,8 +906,58 @@ inline void ttv(
 
 		auto const n = compute_ninvpia( na, pia, inv_pia_m );
 		assert(n == wa_m);
-		multiple_gemv_over_large_tensor_slices( 
+		loops_over_gemv_subtensors( 
 		    gemv_col_blas<value_t,size_t>, p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+	}
+}
+
+
+/** \brief Implements a tensor-times-vector-multiplication with large tensor slices
+ *
+ * Performs a matrix-times-vector in the most inner recursion level where the matrix has the dimensions na_m x nn.
+ * Squeezed matrix is a subtensor where we assume large memory
+ * It is a very simply matrix-times-vector implementation.
+ *
+ *
+*/
+template<class value_t, class size_t>
+inline void ttv(
+			execution_policy::parallel_task_loop_t, slicing_policy::subtensor_t, fusion_policy::none_t,
+      unsigned const m,
+      unsigned const p,
+			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+			value_t const*const __restrict b, size_t const*const nb,
+			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+			)
+{
+  static const unsigned cores = get_number_cores();
+	if(!is_case<8>(p,m,pia)){
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+	}
+	else {
+		assert(is_case<8>(p,m,pia));
+		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
+
+		assert(m>0);
+
+		auto const na_m = na[m-1];
+		auto const wa_m = wa[m-1];
+		
+    set_blas_threads_min();
+    assert(get_blas_threads() == 1);
+
+		auto const n = compute_ninvpia( na, pia, inv_pia_m );
+		assert(n == wa_m);
+
+#pragma omp parallel num_threads(cores) 
+    {
+#pragma omp single
+    {
+		task_loops_over_gemv_subtensors(p, p-1, n, na_m, wa_m, inv_pia_m, a, na, wa, pia, b,  c, nc, wc, pic);
+		}
+		}
 	}
 }
 
@@ -805,17 +966,17 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_t, slicing_policy::subtensor_t, fusion_policy::none_t,	
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();
+  static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -843,9 +1004,9 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
-      		set_blas_threads_min();
-            assert(get_blas_threads() == 1);
-			multiple_gemv_over_large_tensor_slices
+      set_blas_threads_min();
+      assert(get_blas_threads() == 1);
+			loops_over_gemv_subtensors
 				( gemv_col<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  
 				a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic );
 		}
@@ -856,21 +1017,21 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_loop_t, slicing_policy::subtensor_t, fusion_policy::none_t,
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();
+  static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
-	    set_omp_nested();			
+    set_omp_nested();			
 		assert(m>0);			
 		assert(p>2);
 		assert(is_case<8>(p,m,pia));
@@ -895,9 +1056,9 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t i = 0; i < na[pia[maxp-1]-1]; ++i){
-            set_blas_threads_min();
-            assert(get_blas_threads() == 1);
-			multiple_gemv_over_large_tensor_slices 
+      set_blas_threads_min();
+      assert(get_blas_threads() == 1);
+			loops_over_gemv_subtensors 
 				(gemv_col_blas<value_t,size_t>, p-1,p-2,n,  na_m,wa_m,inv_pia_m,  a+i*wa[pia[maxp-1]-1],na,wa,pia,  b,  c+i*wc[pic[maxp-2]-1],nc,wc,pic);
 		}
 	}
@@ -907,8 +1068,8 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_loop_t, slicing_policy::subtensor_t, fusion_policy::all_t,
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
@@ -916,12 +1077,12 @@ inline void ttv(
 {
     static const unsigned cores = get_number_cores();
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-    	set_omp_nested();
+    set_omp_nested();
 		assert(is_case<8>(p,m,pia));
 		assert(m>0);
 		
@@ -945,11 +1106,11 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t i = 0; i < num; ++i){
-
-            set_blas_threads_min();
-            assert(get_blas_threads() == 1);
 		
-			multiple_gemv_over_large_tensor_slices
+      set_blas_threads_min();
+      assert(get_blas_threads() == 1);
+		
+			loops_over_gemv_subtensors
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
 		}
 	}
@@ -959,16 +1120,16 @@ inline void ttv(
 template<class value_t, class size_t>
 inline void ttv(
 			execution_policy::parallel_blas_t, slicing_policy::subtensor_t, fusion_policy::all_t,
-            unsigned const m,
-            unsigned const p,
+      unsigned const m,
+      unsigned const p,
 			value_t const*const __restrict a, size_t const*const na, size_t const*const wa, size_t const*const pia,
 			value_t const*const __restrict b, size_t const*const nb,
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {		
@@ -993,11 +1154,11 @@ inline void ttv(
 		auto const wa_m1 = wa[pia[inv_pia_m  ]-1];
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= get_number_cores());
 		
 		for(size_t i = 0; i < num; ++i){
-			multiple_gemv_over_large_tensor_slices
+			loops_over_gemv_subtensors
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
 		}
 	}
@@ -1016,10 +1177,10 @@ inline void ttv(
 			value_t      *const __restrict c, size_t const*const nc, size_t const*const wc, size_t const*const pic
 			)
 {
-    static const unsigned cores = get_number_cores();	
+  static const unsigned cores = get_number_cores();	
 	if(!is_case<8>(p,m,pia)){
-        set_blas_threads_max();
-        assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
@@ -1046,15 +1207,15 @@ inline void ttv(
 		auto const wc_m1 = wc[pic[inv_pia_m-1]-1];
 		
 		const auto ompthreads = unsigned (double(cores)*ratio);
-        const auto blasthreads = unsigned (double(cores)*(1.0-ratio)); 
+    const auto blasthreads = unsigned (double(cores)*(1.0-ratio)); 
 
-        #pragma omp parallel for schedule(static) num_threads(ompthreads) proc_bind(spread) 
+    #pragma omp parallel for schedule(static) num_threads(ompthreads) proc_bind(spread) 
 		for(size_t i = 0; i < num; ++i){
 
-            set_blas_threads(blasthreads);
-            assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+      set_blas_threads(blasthreads);
+      assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
 		
-			multiple_gemv_over_large_tensor_slices
+			loops_over_gemv_subtensors
 				(gemv_col_blas<value_t,size_t>,  inv_pia_m-1, inv_pia_m-1, wa_m, na_m, wa_m, inv_pia_m, a+i*wa_m1,na,wa,pia,    b,   c+i*wc_m1,nc,wc,pic );
 		}
 	}

@@ -24,6 +24,7 @@ namespace tlib::ttv::execution_policy
 struct sequential_t         {};
 struct sequential_blas_t    {};
 struct parallel_t           {};
+struct parallel_task_loop_t {};
 struct parallel_loop_t      {};
 struct parallel_blas_t      {};
 struct parallel_loop_blas_t {};
@@ -32,6 +33,7 @@ inline constexpr sequential_t         seq;
 inline constexpr sequential_blas_t    seq_blas;
 inline constexpr parallel_t           par;
 inline constexpr parallel_loop_t      par_loop;
+inline constexpr parallel_task_loop_t par_task_loop;
 inline constexpr parallel_blas_t      par_blas;
 inline constexpr parallel_loop_blas_t par_blas_loop;
 }
