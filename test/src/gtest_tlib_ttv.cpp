@@ -258,11 +258,24 @@ TEST(TensorTimesVector, ParallelLoopSubtensorAll)
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
+TEST(TensorTimesVector, ParallelTaskSubtensor)
+{
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = execution_policy::parallel_task_t;
+	using slicing_policy   = slicing_policy::subtensor_t;
+	using fusion_policy    = fusion_policy::none_t;
+
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
+}
+
 TEST(TensorTimesVector, ParallelTaskLoopSubtensor)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = execution_policy::parallel_task_loop_t;
+	using execution_policy = execution_policy::parallel_taskloop_t;
 	using slicing_policy   = slicing_policy::subtensor_t;
 	using fusion_policy    = fusion_policy::none_t;
 
@@ -343,11 +356,25 @@ TEST(TensorTimesVector, ParallelLoopSlicesNone)
 	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
 }
 
+
+TEST(TensorTimesVector, ParallelTaskSlicesNone)
+{
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = execution_policy::parallel_task_t;
+	using slicing_policy   = slicing_policy::slice_t;
+	using fusion_policy    = fusion_policy::none_t;
+
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
+}
+
 TEST(TensorTimesVector, ParallelTaskLoopSlicesNone)
 {
 	using value_type       = double;
 	using size_type        = std::size_t;
-	using execution_policy = execution_policy::parallel_task_loop_t;
+	using execution_policy = execution_policy::parallel_taskloop_t;
 	using slicing_policy   = slicing_policy::slice_t;
 	using fusion_policy    = fusion_policy::none_t;
 
