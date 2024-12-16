@@ -514,9 +514,9 @@ inline void ttv(execution_policy::parallel_task_t, slicing_policy::slice_t, fusi
 template<class value_t, class size_t>
 inline void ttv(execution_policy::parallel_taskloop_t, slicing_policy::slice_t, fusion_policy::none_t,
                 unsigned const m, unsigned const p,
-		value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic )
+                value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+                value_t const*const b, size_t const*const nb,
+                value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic )
 {
     set_omp_nested(); 
     static const unsigned cores = get_number_cores();
@@ -552,15 +552,14 @@ inline void ttv(execution_policy::parallel_t, slicing_policy::slice_t, fusion_po
                 unsigned const m,
                 unsigned const p,
                 value_t const*const a, size_t const*const na, size_t const*const wa, size_t const*const pia,
-		value_t const*const b, size_t const*const nb,
-		value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic )
+                value_t const*const b, size_t const*const nb,
+                value_t      *const c, size_t const*const nc, size_t const*const wc, size_t const*const pic )
 {
-    set_omp_nested(); 
-
     if(!is_case<8>(p,m,pia)) {
         mtv(execution_policy::par,m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
     }
     else {
+        set_omp_nested(); 
         assert(is_case<8>(p,m,pia));
 
         auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );
@@ -667,7 +666,7 @@ inline void ttv(
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-    set_omp_nested(); 
+        set_omp_nested(); 
 		assert(is_case<8>(p,m,pia));
 		
 		auto const inv_pia_m = compute_inverse_pia_m( pia, pic, p, m );				
@@ -692,8 +691,8 @@ inline void ttv(
 
 		#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
 		for(size_t k = 0u; k < num; ++k){
-      set_blas_threads_min();
-      assert(get_blas_threads()==1);
+            set_blas_threads_min();
+            assert(get_blas_threads()==1);
 
 			loops_over_gemv_slices
 				( gemv_col_blas<value_t,size_t>, inv_pia_m-1, inv_pia_m-1, na_pia_1, na[m-1], wa[m-1], inv_pia_m,  a+k*wa_m1 ,na,wa,pia,  b,  c+k*wc_m1,nc,wc,pic );

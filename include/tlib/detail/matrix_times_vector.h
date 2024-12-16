@@ -79,7 +79,7 @@ void gemv_row_parallel(
 		size_t const lda)
 {
     static const unsigned cores = get_number_cores();
-#pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
+    #pragma omp parallel for schedule(static) num_threads(cores) proc_bind(spread)
     for(unsigned i = 0; i < M; ++i){
         auto const*const __restrict ai = a+i*lda;
         auto sum = value_t{};
@@ -200,7 +200,7 @@ inline void gemv_col_blas(
     const MKL_INT NN = N;
     const MKL_INT LDA = lda;
     const MKL_INT INC = 1;
-#elif defined USE_OPENBLAS
+#elif defined USE_OPENBLAS || defined USE_BLIS
     const auto MM = M;
     const auto NN = N;
     const auto LDA = lda;
@@ -208,7 +208,7 @@ inline void gemv_col_blas(
 #endif
 
 				// CblasColMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_MKL || defined USE_OPENBLAS
+#if defined USE_MKL || defined USE_OPENBLAS || USE_BLIS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasColMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c), INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
@@ -242,14 +242,14 @@ inline void gemv_row_blas(
     const MKL_INT NN = N;
     const MKL_INT LDA = lda;
     const MKL_INT INC = 1;
-#elif defined USE_OPENBLAS
+#elif defined USE_OPENBLAS || defined USE_BLIS
     const auto MM = M;
     const auto NN = N;
     const auto LDA = lda;
     const auto INC = size_t(1);
 #endif
 		// CblasRowMajor CblasNoTrans      m         n     alpha  a   lda   x  incx  beta  y   incy
-#if defined USE_MKL || defined USE_OPENBLAS
+#if defined USE_MKL || defined USE_OPENBLAS || USE_BLIS
 	if constexpr      ( std::is_same<value_t,float>::value )
 		cblas_sgemv(CblasRowMajor, CblasNoTrans, MM,  NN, 1.0f,  const_cast<float*const>(a),  LDA, const_cast<float*const> (b), INC,  0.0f, const_cast<float*const> (c),  INC);
 	else if constexpr ( std::is_same<value_t,double>::value )
