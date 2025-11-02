@@ -144,6 +144,8 @@ inline void set_omp_nested()
 
 
 
+
+
 template<class size_t>
 inline unsigned compute_inverse_pia_m(size_t const*const pia, size_t const*const pic,  unsigned const p, unsigned const m)
 {
@@ -177,6 +179,29 @@ inline auto compute_ninvpia(size_t const*const na, size_t const*const pia, unsig
         nn *= na[pia[r]-1];
     }
 	return nn;
+}
+
+/* @brief Computes number of elements between modes start and finish
+ *
+ *
+ * nn = n_{\pi_{start}} * n_{\pi_{start+1}} * ... * n_{\pi_{finish}}
+ *
+ * \param n dimension tuple
+ * \param pi layout tuple
+ * \param start starting mode (one-based)
+ * \param finish end mode (one-based)
+*/
+
+template<class size_t>
+inline auto product(size_t const*const n, size_t const*const pi, unsigned start, unsigned finish)
+{
+
+    size_t nn = 1;
+    for(unsigned r = start-1; r<(finish-1); ++r){
+        nn *= n[pi[r]-1];
+    }
+
+    return nn;
 }
 
 
@@ -1119,6 +1144,7 @@ inline void ttv(
 		mtv(execution_policy::par, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
+  	set_omp_nested();
 		assert(is_case<8>(p,m,pia));
 		assert(m>0);
 				
@@ -1323,7 +1349,7 @@ inline void ttv(
 		mtv(execution_policy::par_blas, m, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
 	}
 	else {
-    	set_omp_nested();
+    set_omp_nested();
 		assert(is_case<8>(p,m,pia));
 		assert(m>0);
 		
@@ -1359,6 +1385,160 @@ inline void ttv(
 		}
 	}
 }
+
+
+template<class value_t, class size_t>
+inline void ttv(
+        execution_policy::combined_t, slicing_policy::combined_t, fusion_policy::all_t,
+        unsigned const q, unsigned const p,
+        const value_t *a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+        const value_t *b, size_t const*const nb, 
+              value_t *c, size_t const*const nc, size_t const*const wc, size_t const*const pic
+        )
+{
+
+  static const unsigned cores = get_number_cores();	
+
+	if(!is_case<8>(p,q,pia)){
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+		mtv(execution_policy::par_blas, q, p,  a, na, wa, pia,  b, nb,  c, nc, wc, pic);
+		return;
+	}
+
+//=> compute `par-loop-count` with `par-loop` with `qD` slices
+//=> IF `par-loop-count` > `num-procs` THEN use `par-loop` with `qD` slices.
+//=> ELSE compute `par-loop-count` with `par-loop` with `2D` slices 
+//    => IF `par-loop-count` > `num-procs` THEN use `par-loop` with `2D` slices
+//    => ELSE use `par-gemv` with `qD` slices (`par-gemv` with `2D` slices does perform for non-symmetric and symmetric tensor shapes)
+    
+    assert(is_case<8>(p,q,pia));
+    assert(q>0);
+    assert(p>2);
+    
+    auto const qh = inverse_mode(pia, pia+p, q);
+
+    // inner = n[pi[2]] * ... * n[pi[qh-1]] with pi[qh] = q
+    auto const inner = product(na, pia, 2, qh);    
+      
+    // outer = n[pi[qh+1]] * n[pi[qh+2]] * ... * n[pi[p]]
+    auto const outer = product(na, pia, qh+1,p+1);
+        
+    if( outer >= cores){
+        ttv(execution_policy::par_loop, slicing_policy::subtensor, fusion_policy::all,
+            q, p,
+            a, na, wa, pia,
+            b, nb,
+            c, nc, wc, pic );
+    }
+    else {
+      if(inner*outer >= cores) {
+          ttv(execution_policy::par_loop, slicing_policy::slice, fusion_policy::all,
+              q, p,
+              a, na, wa, pia,
+              b, nb,
+              c, nc, wc, pic );
+      }
+      else{
+          ttv(execution_policy::par_blas, slicing_policy::subtensor, fusion_policy::all,
+              q, p,
+              a, na, wa, pia,
+              b, nb,
+              c, nc, wc, pic );
+      }
+    }
+}
+
+/*
+
+
+template<class value_t, class size_t>
+inline void ttv(
+        parallel_policy::batched_gemv_t, slicing_policy::subtensor_t, fusion_policy::all_t,
+        unsigned const q, unsigned const p,
+        const value_t *a, size_t const*const na, size_t const*const wa, size_t const*const pia,
+        const value_t *b, size_t const*const nb, size_t const*const pib,
+        value_t *c, size_t const*const nc, size_t const*const wc
+        )
+{
+    auto is_cm = pib[0] == 1;
+
+    set_blas_threads_max();
+    assert(get_blas_threads() > 1 || get_blas_threads() <= cores);
+    
+    if(!is_case<8>(p,q,pia)){
+        if(is_cm)
+            mtm_cm(q, p,  a, na, pia, b, nb, c, nc );
+        else
+            mtm_rm(q, p,  a, na, pia, b, nb, c, nc );
+    }
+    else {
+        assert(is_case<8>(p,q,pia));
+        assert(q>0);
+        assert(p>2);
+#ifdef USE_MKL
+
+        auto const qh = compute_inverse_pia_m( pia, pic, p, q );
+
+        // num = n[pi[qh+1]] * n[pi[qh+2]] * ... * n[pi[p]]
+        auto pp = product(na, pia, qh+1,p+1);
+
+        // w[pi[q]]  = 1 * n[pi[1]] * n[pi[2]] * ... * n[pi[qh-1]]
+        auto const waq = wa[pia[qh]-1];
+        auto const wcq = wc[pia[qh]-1];
+
+        // num = n[pi[1]] * n[pi[2]] * ... * n[pi[qh-1]] with pi[qh] = q
+        auto const nnq = product(na, pia, 1, qh);
+
+        auto m      = nc[q-1];
+        auto nq     = na[q-1];
+
+
+        using index_t = MKL_INT;
+        using vector  = std::vector<value_t>;
+        using ivector = std::vector<index_t>;
+        using vvector = std::vector<value_t*>;
+
+        const auto L =  is_cm ? CblasColMajor : CblasRowMajor;
+        const auto Ta = std::vector<CBLAS_TRANSPOSE>(pp,CblasNoTrans);
+        const auto Tb = std::vector<CBLAS_TRANSPOSE>(pp,is_cm ? CblasTrans : CblasNoTrans);
+
+        auto Ma = ivector(pp, is_cm ? nnq :   m);
+        auto Na = ivector(pp, is_cm ?   m : nnq);
+        auto Ka = ivector(pp, nq);
+
+        auto ALPHAa = vector(pp,1.0);
+        auto BETAa  = vector(pp,0.0);
+
+        auto LDAa = ivector(pp, is_cm ? nnq :  nq);
+        auto LDBa = ivector(pp, is_cm ?   m : nnq);
+        auto LDCa = ivector(pp, is_cm ? nnq : nnq);
+
+        auto Ba = vvector(pp,nullptr);
+        auto Aa = vvector(pp,nullptr); // (value_t*)b
+        auto Ca = vvector(pp,nullptr);
+
+        for(size_t k = 0u; k < pp; ++k){
+            Aa[k] = is_cm ? (value_t*)a+k*waq : (value_t*)b;
+            Ba[k] = is_cm ? (value_t*)b       : (value_t*)a+k*waq;
+            Ca[k] = c+k*wcq;
+        }
+
+        const auto gcount = index_t(pp);
+        const auto gsize  = ivector(pp,1);
+
+        if constexpr (std::is_same_v<value_t,double>){
+            cblas_dgemm_batch (L,Ta.data(),Tb.data(), Ma.data(),Na.data(),Ka.data(), ALPHAa.data(), (const value_t**)Aa.data(),LDAa.data(), (const value_t**)Ba.data(),LDBa.data(), BETAa.data(), Ca.data(),LDCa.data(), gcount, gsize.data());
+        }
+        else{
+            cblas_sgemm_batch (L,Ta.data(),Tb.data(), Ma.data(),Na.data(),Ka.data(), ALPHAa.data(), (const value_t**)Aa.data(),LDAa.data(), (const value_t**)Ba.data(),LDBa.data(), BETAa.data(), Ca.data(),LDCa.data(), gcount, gsize.data());
+        }
+#endif
+    }
+}
+
+
+*/
 
 
 

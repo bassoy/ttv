@@ -425,3 +425,16 @@ TEST(TensorTimesVector, ThreadedBlasSlicesAll)
 }
 
 
+TEST(TensorTimesVector, Combined)
+{
+	using value_type       = double;
+	using size_type        = std::size_t;
+	using execution_policy = execution_policy::combined_t;
+	using slicing_policy   = slicing_policy::combined_t;
+	using fusion_policy    = fusion_policy::all_t;
+
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,2u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,3u>(2,3);
+	check_tensor_times_vector<value_type,size_type,execution_policy,slicing_policy,fusion_policy,4u>(2,3);
+}
+

@@ -29,6 +29,8 @@ struct parallel_task_t      {};
 struct parallel_loop_t      {};
 struct parallel_blas_t      {};
 struct parallel_loop_blas_t {};
+struct batched_gemv_t       {}; // multithreaded batched gemv with collapsed loops
+struct combined_t           {};
 
 inline constexpr sequential_t         seq;
 inline constexpr sequential_blas_t    seq_blas;
@@ -38,13 +40,18 @@ inline constexpr parallel_taskloop_t  par_taskloop;
 inline constexpr parallel_task_t      par_task;
 inline constexpr parallel_blas_t      par_blas;
 inline constexpr parallel_loop_blas_t par_blas_loop;
+inline constexpr batched_gemv_t       batched_gemv;
+inline constexpr combined_t           combined;
+
 }
 
 namespace tlib::ttv::slicing_policy
 {
 struct slice_t      {};
 struct subtensor_t  {};
+struct combined_t   {};
 
+inline constexpr combined_t   combined;
 inline constexpr slice_t     slice;
 inline constexpr subtensor_t subtensor;
 }
